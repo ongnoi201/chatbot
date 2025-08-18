@@ -1,0 +1,26 @@
+{
+  "name": "ChatBot",
+  "short_name": "ChatBot",
+  "description": "Tạo nhân vật và trò chuyện",
+  "start_url": "/",
+  "display": "fullscreen",
+  "background_color": "#ffffff",
+  "theme_color": "#4CAF50",
+  "icons": [
+    {
+      "src": "/chatbot128.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    },
+    {
+      "src": "/chatbot256.png",
+      "sizes": "256x256",
+      "type": "image/png"
+    },
+    {
+      "src": "/chatbo512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
