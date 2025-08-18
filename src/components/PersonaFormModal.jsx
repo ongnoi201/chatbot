@@ -10,6 +10,8 @@ export default function PersonaFormModal({
 }) {
     const [showCropper, setShowCropper] = useState(false);
     const [tempImage, setTempImage] = useState(null);
+    const [tempFile, setTempFile] = useState(null);
+
     const [form, setForm] = useState({
         avatarUrl: "",
         name: "",
@@ -35,6 +37,7 @@ export default function PersonaFormModal({
             const file = files[0];
             const url = URL.createObjectURL(file);
             setTempImage(url); 
+            setTempFile(file);
             setShowCropper(true);
         } else {
             setForm({ ...form, [name]: value });
@@ -111,6 +114,7 @@ export default function PersonaFormModal({
             {showCropper && (
                 <CropperModal
                     image={tempImage}
+                    originalFileName={tempFile?.name}
                     onClose={() => setShowCropper(false)}
                     onSave={(cropped) => {
                         setForm({

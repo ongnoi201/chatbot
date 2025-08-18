@@ -1,7 +1,7 @@
 import Cropper from "react-easy-crop";
 import { useState, useCallback } from "react";
 
-export default function CropperModal({ image, onClose, onSave }) {
+export default function CropperModal({ image, originalFileName, onClose, onSave }) {
     const [crop, setCrop] = useState({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1);
     const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
@@ -31,7 +31,9 @@ export default function CropperModal({ image, onClose, onSave }) {
         );
 
         return new Promise((resolve) => {
-            canvas.toBlob((file) => {
+            canvas.toBlob((blob) => {
+                const fileName = originalFileName || "avatar.jpg";
+                const file = new File([blob], fileName, { type: "image/jpeg" });
                 resolve({ file, url: URL.createObjectURL(file) });
             }, "image/jpeg");
         });
