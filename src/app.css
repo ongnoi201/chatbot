@@ -8,7 +8,7 @@
 body,
 html,
 #root {
-    height: 100vh;
+    height: 100%;
     background: #f7f8fa;
     color: #333;
     -webkit-user-select: none;
