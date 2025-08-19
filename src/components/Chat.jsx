@@ -7,10 +7,10 @@ import "alertifyjs/build/css/themes/default.css";
 import PersonaFormModal from "./PersonaFormModal";
 import { useEffect, useRef, useState } from "react";
 import { getPersonas, createPersona, getChatHistory, streamChat, deleteChatFrom, updatePersona, deletePersona } from "../api";
+import TypingIndicator from "./TypingIndicator";
 
 export default function Chat({ user, onLogout }) {
     const bottomRef = useRef(null);
-    const longPressTimer = useRef(null);
     const [personas, setPersonas] = useState([]);
     const [selectedPersona, setSelectedPersona] = useState(null);
     const [messages, setMessages] = useState([]);
@@ -88,27 +88,42 @@ export default function Chat({ user, onLogout }) {
         );
     }
 
+    async function onSendRegenerate(history) {
+        setMessages(history);
+
+        let assistantMsg = { role: "assistant", content: "" };
+        setMessages((prev) => [...prev, assistantMsg]);
+
+        await streamChat(
+            selectedPersona._id,
+            {
+                messages: history,
+                model,
+                temperature: 0.7,
+                maxOutputTokens: 1024,
+                regenerate: true,
+            },
+            (delta) => {
+                assistantMsg = { ...assistantMsg, content: assistantMsg.content + delta };
+                setMessages((prev) => [...prev.slice(0, -1), assistantMsg]);
+            },
+            () => { },
+            (error) => {
+                assistantMsg = { role: "assistant", content: `⚠️ Stream error: ${error}` };
+                setMessages((prev) => [...prev.slice(0, -1), assistantMsg]);
+            }
+        );
+    }
+
+    useEffect(() => {
+        const disableContextMenu = (e) => e.preventDefault();
+        document.addEventListener("contextmenu", disableContextMenu);
+        return () => document.removeEventListener("contextmenu", disableContextMenu);
+    }, []);
+
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: "instant", block: "end" });
     }, [messages]);
-
-    useEffect(() => {
-        function handleClickOutside(e) {
-            if (!contextMenu) return;
-            const menuElem = document.querySelector(".context-menu");
-            if (menuElem && !menuElem.contains(e.target)) {
-                setContextMenu(null);
-            }
-        }
-
-        document.addEventListener("click", handleClickOutside);
-        document.addEventListener("touchstart", handleClickOutside);
-
-        return () => {
-            document.removeEventListener("click", handleClickOutside);
-            document.removeEventListener("touchstart", handleClickOutside);
-        };
-    }, [contextMenu]);
 
 
     return (
@@ -125,7 +140,7 @@ export default function Chat({ user, onLogout }) {
             <aside className={`sidebar ${showSidebar ? "open" : ""}`}>
                 <div className="sidebar-top">
                     <center><h2>Nhân vật</h2></center>
-                    <button className="add-persona" onClick={() => setFormMode("create")}>+ Tạo Nhân Vật Mới</button>
+                    <button className="add-persona" onClick={() => setFormMode("create")}>Tạo Nhân Vật Mới</button>
                     <div className="persona-list">
                         {personas.map((p) => (
                             <div
@@ -174,22 +189,51 @@ export default function Chat({ user, onLogout }) {
                     <>
                         <div className="messages">
                             {messages.map((m, i) => (
-                                <div key={i} className={`msg ${m.role}`}
-                                    onContextMenu={(e) => {
-                                        e.preventDefault();
-                                        setContextMenu({ x: e.clientX, y: e.clientY, index: i });
-                                    }}
-                                    onTouchStart={(e) => {
-                                        longPressTimer.current = setTimeout(() => {
-                                            const touch = e.touches[0];
-                                            setContextMenu({ x: touch.clientX, y: touch.clientY, index: i });
-                                        }, 600);
-                                    }}
-                                    onTouchEnd={() => {
-                                        clearTimeout(longPressTimer.current);
-                                    }}
-                                >
-                                    <div className="bubble">{m.content}</div>
+                                <div key={i} className="msg-block">
+                                    <div className={`msg ${m.role}`}>
+                                        <div className="bubble">
+                                            {m.role === "assistant" && m.content === "" ? (
+                                                <TypingIndicator />
+                                            ) : (
+                                                m.content
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="msg-actions">
+                                        <button
+                                            title="Copy"
+                                            onClick={() => navigator.clipboard.writeText(m.content)}
+                                        >
+                                            <i className="bi bi-clipboard"></i>
+                                        </button>
+                                        <button
+                                            title="Delete"
+                                            onClick={() =>
+                                                setConfirmDelete({ personaId: selectedPersona._id, index: i })
+                                            }
+                                        >
+                                            <i className="bi bi-trash"></i>
+                                        </button>
+
+                                        {m.role === "assistant" && i === messages.length - 1 && (
+                                            <button
+                                                title="Regenerate"
+                                                onClick={() => {
+                                                    const lastUserIndex = [...messages]
+                                                        .reverse()
+                                                        .findIndex((msg) => msg.role === "user");
+
+                                                    if (lastUserIndex !== -1) {
+                                                        const actualIndex = messages.length - 1 - lastUserIndex;
+                                                        const history = messages.slice(0, actualIndex + 1);
+                                                        onSendRegenerate(history);
+                                                    }
+                                                }}
+                                            >
+                                                <i className="bi bi-arrow-repeat"></i>
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             ))}
                             <div ref={bottomRef} />
