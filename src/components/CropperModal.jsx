@@ -55,7 +55,7 @@ export default function CropperModal({ image, originalFileName, onClose, onSave 
     }
 
     return (
-        <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-overlay animate__animated animate__zoomIn" onClick={onClose}>
             <div className="modal" onClick={(e) => e.stopPropagation()}>
                 <h3>Cắt ảnh</h3>
                 <div className="crop-container" style={{ position: "relative", width: "100%", height: 400 }}>

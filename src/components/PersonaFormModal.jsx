@@ -50,7 +50,7 @@ export default function PersonaFormModal({
     }
 
     return (
-        <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-overlay animate__animated animate__zoomIn" onClick={onClose}>
             <div className="modal" onClick={(e) => e.stopPropagation()}>
                 <h3>{mode === "create" ? "Thêm Nhân Vật" : "Cài đặt Nhân Vật"}</h3>
                 <form onSubmit={handleSubmit} className="modal-form">

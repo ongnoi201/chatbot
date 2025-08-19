@@ -1,13 +1,18 @@
 import { useState } from "react";
 import { login, register } from "../api";
 import './Auth.css';
+import alertify from "alertifyjs";
+import "alertifyjs/build/css/alertify.css";
+import "alertifyjs/build/css/themes/default.css";
 
 export default function Auth({ onAuth }) {
     const [isRegister, setIsRegister] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [name, setName] = useState("");
-    const [error, setError] = useState("");
+    
+    alertify.set('notifier', 'position', 'top-right');
+    alertify.set('notifier', 'delay', 3);
 
     async function handleSubmit(e) {
         e.preventDefault();
@@ -22,14 +27,13 @@ export default function Auth({ onAuth }) {
             localStorage.setItem("user", JSON.stringify(data.user));
             onAuth(data.user);
         } catch (err) {
-            setError(err.message);
+            alertify.error(err.message);
         }
     }
 
     return (
-        <div className="auth-container">
+        <div className="auth-container animate__animated animate__backInUp">
             <h2>{isRegister ? "Đăng ký" : "Đăng nhập"}</h2>
-            {error && <div className="error">{error}</div>}
             <form onSubmit={handleSubmit}>
                 {isRegister && (
                     <input
