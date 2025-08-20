@@ -6,7 +6,15 @@ import "alertifyjs/build/css/alertify.css";
 import "alertifyjs/build/css/themes/default.css";
 import PersonaFormModal from "./PersonaFormModal";
 import { useEffect, useRef, useState } from "react";
-import { getPersonas, createPersona, getChatHistory, streamChat, deleteChatFrom, updatePersona, deletePersona } from "../api";
+import {
+    getPersonas,
+    createPersona,
+    getChatHistory,
+    streamChat,
+    deleteChatFrom,
+    updatePersona,
+    deletePersona
+} from "../api";
 import TypingIndicator from "./TypingIndicator";
 
 export default function Chat({ user, onLogout }) {
@@ -19,31 +27,38 @@ export default function Chat({ user, onLogout }) {
     const [contextMenu, setContextMenu] = useState(null);
     const [confirmDelete, setConfirmDelete] = useState(null);
     const [showSidebar, setShowSidebar] = useState(false);
+    const [confirmLogout, setConfirmLogout] = useState(false);
     const [isCompact, setIsCompact] = useState(false);
     const [confirmDeletePersona, setConfirmDeletePersona] = useState(null);
     const [formMode, setFormMode] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [closing, setClosing] = useState(false);
 
-    alertify.set('notifier', 'position', 'top-right');
-    alertify.set('notifier', 'delay', 3);
+    alertify.set("notifier", "position", "top-right");
+    alertify.set("notifier", "delay", 3);
 
     useEffect(() => {
         loadPersonas();
     }, []);
 
     async function loadPersonas() {
+        setLoading(true);
         try {
             const list = await getPersonas();
             setPersonas(list);
             if (list.length > 0) {
-                selectPersona(list[0]);
+                await selectPersona(list[0]);
             }
         } catch (err) {
             console.error("Lỗi khi load personas", err);
+        } finally {
+            setLoading(false);
         }
     }
 
     async function selectPersona(p) {
         setSelectedPersona(p);
+        setLoading(true);
         try {
             const history = await getChatHistory(p._id);
             setMessages(history);
@@ -51,9 +66,10 @@ export default function Chat({ user, onLogout }) {
             setMessages([
                 { role: "assistant", content: `Xin chào! Mình là ${p.name}. Bạn cần gì?` },
             ]);
+        } finally {
+            setLoading(false);
         }
     }
-
 
     async function onSend() {
         if (!input.trim() || !selectedPersona) return;
@@ -67,6 +83,7 @@ export default function Chat({ user, onLogout }) {
 
         const history = [...messages, userMsg];
 
+        setLoading(true);
         await streamChat(
             selectedPersona._id,
             {
@@ -79,11 +96,13 @@ export default function Chat({ user, onLogout }) {
                 assistantMsg = { ...assistantMsg, content: assistantMsg.content + delta };
                 setMessages((prev) => [...prev.slice(0, -1), assistantMsg]);
             },
-            (finalData) => {
+            () => {
+                setLoading(false);
             },
             (error) => {
                 assistantMsg = { role: "assistant", content: `⚠️ Stream error: ${error}` };
                 setMessages((prev) => [...prev.slice(0, -1), assistantMsg]);
+                setLoading(false);
             }
         );
     }
@@ -94,6 +113,7 @@ export default function Chat({ user, onLogout }) {
         let assistantMsg = { role: "assistant", content: "" };
         setMessages((prev) => [...prev, assistantMsg]);
 
+        setLoading(true);
         await streamChat(
             selectedPersona._id,
             {
@@ -107,10 +127,13 @@ export default function Chat({ user, onLogout }) {
                 assistantMsg = { ...assistantMsg, content: assistantMsg.content + delta };
                 setMessages((prev) => [...prev.slice(0, -1), assistantMsg]);
             },
-            () => { },
+            () => {
+                setLoading(false);
+            },
             (error) => {
                 assistantMsg = { role: "assistant", content: `⚠️ Stream error: ${error}` };
                 setMessages((prev) => [...prev.slice(0, -1), assistantMsg]);
+                setLoading(false);
             }
         );
     }
@@ -125,44 +148,71 @@ export default function Chat({ user, onLogout }) {
         bottomRef.current?.scrollIntoView({ behavior: "instant", block: "end" });
     }, [messages]);
 
-
     return (
-        <div className="wrap" style={{
-            "--wrap-bg": selectedPersona?.avatarUrl
-                ? `url(${selectedPersona.avatarUrl})`
-                : "none"
-        }}
+        <div
+            className="wrap"
+            style={{
+                "--wrap-bg": selectedPersona?.avatarUrl
+                    ? `url(${selectedPersona.avatarUrl})`
+                    : "none",
+            }}
         >
-            <button className="toggle-sidebar" onClick={() => setShowSidebar(!showSidebar)}>☰</button>
+            {loading && (
+                <div className="loading-overlay">
+                    <div className="spinner"></div>
+                </div>
+            )}
 
+            <button
+                className="toggle-sidebar"
+                onClick={() => {
+                    if (showSidebar) {
+                        setClosing(true);
+                    } else {
+                        setShowSidebar(true);
+                    }
+                }}
+            >
+                {!showSidebar ? "☰" : <i className="bi bi-x-lg"></i>}
+            </button>
 
             {/*=================== SIDEBAR =============================*/}
-            <aside className={`sidebar ${showSidebar ? "open" : ""}`}>
-                <div className="sidebar-top">
-                    <center><h2>Nhân vật</h2></center>
-                    <button className="add-persona" onClick={() => setFormMode("create")}>Tạo Nhân Vật Mới</button>
-                    <div className="persona-list">
-                        {personas.map((p) => (
-                            <div
-                                key={p._id}
-                                className={`persona-item ${selectedPersona?._id === p._id ? "active" : ""}`}
-                                onClick={() => {
-                                    selectPersona(p);
-                                    setShowSidebar(false);
-                                }}
-                            >
-                                <img src={p.avatarUrl} alt="Ảnh nhân vật" />
-                                <p>{p.name}</p>
-                            </div>
-                        ))}
+            {showSidebar && (
+                <aside
+                    className={`sidebar animate__animated ${closing ? "animate__slideOutLeft" : "animate__slideInLeft"}`}
+                    onAnimationEnd={() => {
+                        if (closing) {
+                            setShowSidebar(false);
+                            setClosing(false);
+                        }
+                    }}
+                >
+                    <div className="sidebar-top">
+                        <center><h2>Nhân vật</h2></center>
+                        <button className="add-persona" onClick={() => setFormMode("create")}>Tạo Nhân Vật Mới</button>
+                        <div className="persona-list">
+                            {personas.map((p) => (
+                                <div
+                                    key={p._id}
+                                    className={`persona-item ${selectedPersona?._id === p._id ? "active" : ""}`}
+                                    onClick={() => {
+                                        selectPersona(p);
+                                        setShowSidebar(false);
+                                    }}
+                                >
+                                    <img src={p.avatarUrl} alt="Ảnh nhân vật" />
+                                    <p>{p.name}</p>
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                </div>
-                <div className="sidebar-bottom">
-                    <button className="logout-btn" onClick={onLogout}>
-                        <i className="bi bi-box-arrow-right"></i> Đăng xuất
-                    </button>
-                </div>
-            </aside>
+                    <div className="sidebar-bottom">
+                        <button className="logout-btn" onClick={() => setConfirmLogout(true)}>
+                            <i className="bi bi-box-arrow-right"></i> Đăng xuất
+                        </button>
+                    </div>
+                </aside>
+            )}
 
             {/*======================================= MAIN CHAT =============================*/}
             <main className={`chat ${isCompact ? "compact" : ""}`}>
@@ -240,19 +290,21 @@ export default function Chat({ user, onLogout }) {
                         </div>
 
                         <div className="composer">
-                            <textarea
-                                rows={1}
-                                placeholder="Nhập tin nhắn..."
-                                value={input}
-                                onChange={(e) => setInput(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === "Enter" && !e.shiftKey) {
-                                        e.preventDefault();
-                                        onSend();
-                                    }
-                                }}
-                            />
-                            <button onClick={onSend}><i className="bi bi-send"></i></button>
+                            <div className="composer-input">
+                                <textarea
+                                    rows={1}
+                                    placeholder="Nhập tin nhắn..."
+                                    value={input}
+                                    onChange={(e) => setInput(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter" && !e.shiftKey) {
+                                            e.preventDefault();
+                                            onSend();
+                                        }
+                                    }}
+                                />
+                                <button onClick={onSend}><i className="bi bi-send"></i></button>
+                            </div>
                         </div>
                         {contextMenu && (
                             <ContextMenu
@@ -280,18 +332,21 @@ export default function Chat({ user, onLogout }) {
                     message="Bạn có chắc muốn xóa từ đoạn chat này trở về sau?"
                     onCancel={() => setConfirmDelete(null)}
                     onConfirm={async () => {
+                        setLoading(true);
                         try {
                             const updated = await deleteChatFrom(
                                 confirmDelete.personaId,
                                 confirmDelete.index
                             );
                             setMessages(updated);
-                            alertify.success('Xóa thành cônng');
+                            alertify.success("Xóa thành công");
                         } catch (err) {
                             console.error("Xóa chat lỗi", err);
-                            alertify.error('Xóa thất bại');
+                            alertify.error("Xóa thất bại");
+                        } finally {
+                            setLoading(false);
+                            setConfirmDelete(null);
                         }
-                        setConfirmDelete(null);
                     }}
                 />
             )}
@@ -301,6 +356,7 @@ export default function Chat({ user, onLogout }) {
                     message={`Bạn có chắc muốn xóa nhân vật "${confirmDeletePersona.name}" và toàn bộ lịch sử chat không?`}
                     onCancel={() => setConfirmDeletePersona(null)}
                     onConfirm={async () => {
+                        setLoading(true);
                         try {
                             await deletePersona(confirmDeletePersona._id);
                             setPersonas((prev) =>
@@ -308,16 +364,25 @@ export default function Chat({ user, onLogout }) {
                             );
                             setSelectedPersona(null);
                             setMessages([]);
-                            alertify.success('Xóa thành cônng');
+                            alertify.success("Xóa thành công");
                         } catch (err) {
                             console.error("Xóa persona lỗi", err);
-                            alertify.error('Xóa thất bại');
+                            alertify.error("Xóa thất bại");
+                        } finally {
+                            setLoading(false);
+                            setConfirmDeletePersona(null);
                         }
-                        setConfirmDeletePersona(null);
                     }}
                 />
             )}
 
+            {confirmLogout && (
+                <ConfirmModal
+                    message={"Bạn có chắc chắn muốn đăng xuất?"}
+                    onCancel={()=>setConfirmLogout(false)}
+                    onConfirm={()=>onLogout()}
+                />
+            )}
 
             {formMode && (
                 <PersonaFormModal
@@ -325,30 +390,40 @@ export default function Chat({ user, onLogout }) {
                     initialData={formMode === "edit" ? selectedPersona : null}
                     onClose={() => setFormMode(null)}
                     onSubmit={async (data) => {
-                        if (formMode === "create") {
-                            try {
-                                const created = await createPersona({ ...data, rules: [] });
+                        setLoading(true);
+                        try {
+                            if (formMode === "create") {
+                                const created = await createPersona({
+                                    ...data,
+                                    rules: [],
+                                });
                                 setPersonas((prev) => [...prev, created]);
                                 setSelectedPersona(created);
-                            } catch (err) {
-                                alertify.error('Tạo nhân vật thất bại');
-                            }
-                        } else if (formMode === "edit") {
-                            try {
-                                const updated = await updatePersona(selectedPersona._id, data);
+                            } else if (formMode === "edit") {
+                                const updated = await updatePersona(
+                                    selectedPersona._id,
+                                    data
+                                );
                                 setPersonas((prev) =>
-                                    prev.map((p) => (p._id === updated._id ? updated : p))
+                                    prev.map((p) =>
+                                        p._id === updated._id ? updated : p
+                                    )
                                 );
                                 setSelectedPersona(updated);
-                            } catch (err) {
-                                alertify.error('Cập nhật nhân vật thất bại');
                             }
+                        } catch (err) {
+                            alertify.error(
+                                formMode === "create"
+                                    ? "Tạo nhân vật thất bại"
+                                    : "Cập nhật nhân vật thất bại"
+                            );
+                        } finally {
+                            setLoading(false);
+                            setFormMode(null);
                         }
-                        setFormMode(null);
                     }}
                 />
             )}
-
         </div>
     );
 }

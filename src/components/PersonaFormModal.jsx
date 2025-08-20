@@ -11,6 +11,7 @@ export default function PersonaFormModal({
     const [showCropper, setShowCropper] = useState(false);
     const [tempImage, setTempImage] = useState(null);
     const [tempFile, setTempFile] = useState(null);
+    const [closing, setClosing] = useState(false);
 
     const [form, setForm] = useState({
         avatarUrl: "",
@@ -24,10 +25,10 @@ export default function PersonaFormModal({
 
     useEffect(() => {
         if (initialData) {
-            setForm({
-                ...form,
+            setForm((prev) => ({
+                ...prev,
                 ...initialData,
-            });
+            }));
         }
     }, [initialData]);
 
@@ -36,7 +37,7 @@ export default function PersonaFormModal({
         if (name === "avatar" && files[0]) {
             const file = files[0];
             const url = URL.createObjectURL(file);
-            setTempImage(url); 
+            setTempImage(url);
             setTempFile(file);
             setShowCropper(true);
         } else {
@@ -49,9 +50,23 @@ export default function PersonaFormModal({
         onSubmit(form);
     }
 
+    function handleClose() {
+        setClosing(true);
+        setTimeout(() => {
+            onClose();
+            setClosing(false);
+        }, 400); // khớp với animation-duration
+    }
+
     return (
-        <div className="modal-overlay animate__animated animate__zoomIn" onClick={onClose}>
-            <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <div
+            className={`modal-overlay animate__animated ${closing ? "animate__fadeOut" : "animate__fadeIn"}`}
+            onClick={handleClose}
+        >
+            <div
+                className={`modal animate__animated ${closing ? "animate__zoomOut" : "animate__zoomIn"}`}
+                onClick={(e) => e.stopPropagation()}
+            >
                 <h3>{mode === "create" ? "Thêm Nhân Vật" : "Cài đặt Nhân Vật"}</h3>
                 <form onSubmit={handleSubmit} className="modal-form">
                     <input
@@ -102,7 +117,7 @@ export default function PersonaFormModal({
                     </select>
 
                     <div className="modal-actions">
-                        <button type="button" onClick={onClose}>
+                        <button type="button" onClick={handleClose}>
                             Hủy
                         </button>
                         <button type="submit">
@@ -111,6 +126,7 @@ export default function PersonaFormModal({
                     </div>
                 </form>
             </div>
+
             {showCropper && (
                 <CropperModal
                     image={tempImage}

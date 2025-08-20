@@ -5,6 +5,7 @@ export default function CropperModal({ image, originalFileName, onClose, onSave 
     const [crop, setCrop] = useState({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1);
     const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+    const [closing, setClosing] = useState(false);
 
     const onCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
         setCroppedAreaPixels(croppedAreaPixels);
@@ -54,9 +55,23 @@ export default function CropperModal({ image, originalFileName, onClose, onSave 
         onSave(cropped);
     }
 
+    function handleClose() {
+        setClosing(true);
+        setTimeout(() => {
+            onClose();
+            setClosing(false);
+        }, 500);
+    }
+
     return (
-        <div className="modal-overlay animate__animated animate__zoomIn" onClick={onClose}>
-            <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <div
+            className={`modal-overlay animate__animated ${closing ? "animate__fadeOut" : "animate__fadeIn"}`}
+            onClick={handleClose}
+        >
+            <div
+                className={`modal animate__animated ${closing ? "animate__zoomOut" : "animate__zoomIn"}`}
+                onClick={(e) => e.stopPropagation()}
+            >
                 <h3>Cắt ảnh</h3>
                 <div className="crop-container" style={{ position: "relative", width: "100%", height: 400 }}>
                     <Cropper
@@ -76,11 +91,11 @@ export default function CropperModal({ image, originalFileName, onClose, onSave 
                     max={3}
                     step={0.1}
                     value={zoom}
-                    onChange={(e) => setZoom(e.target.value)}
+                    onChange={(e) => setZoom(Number(e.target.value))}
                 />
 
                 <div className="modal-actions">
-                    <button onClick={onClose}>Hủy</button>
+                    <button onClick={handleClose}>Hủy</button>
                     <button onClick={handleSave}>Lưu</button>
                 </div>
             </div>
