@@ -19,6 +19,7 @@ import TypingIndicator from "./TypingIndicator";
 
 export default function Chat({ user, onLogout }) {
     const bottomRef = useRef(null);
+    const messagesRef = useRef(null);
     const [personas, setPersonas] = useState([]);
     const [selectedPersona, setSelectedPersona] = useState(null);
     const [messages, setMessages] = useState([]);
@@ -83,7 +84,6 @@ export default function Chat({ user, onLogout }) {
 
         const history = [...messages, userMsg];
 
-        setLoading(true);
         await streamChat(
             selectedPersona._id,
             {
@@ -96,13 +96,10 @@ export default function Chat({ user, onLogout }) {
                 assistantMsg = { ...assistantMsg, content: assistantMsg.content + delta };
                 setMessages((prev) => [...prev.slice(0, -1), assistantMsg]);
             },
-            () => {
-                setLoading(false);
-            },
+            () => { },
             (error) => {
                 assistantMsg = { role: "assistant", content: `⚠️ Stream error: ${error}` };
                 setMessages((prev) => [...prev.slice(0, -1), assistantMsg]);
-                setLoading(false);
             }
         );
     }
@@ -113,7 +110,6 @@ export default function Chat({ user, onLogout }) {
         let assistantMsg = { role: "assistant", content: "" };
         setMessages((prev) => [...prev, assistantMsg]);
 
-        setLoading(true);
         await streamChat(
             selectedPersona._id,
             {
@@ -127,16 +123,60 @@ export default function Chat({ user, onLogout }) {
                 assistantMsg = { ...assistantMsg, content: assistantMsg.content + delta };
                 setMessages((prev) => [...prev.slice(0, -1), assistantMsg]);
             },
-            () => {
-                setLoading(false);
-            },
+            () => { },
             (error) => {
                 assistantMsg = { role: "assistant", content: `⚠️ Stream error: ${error}` };
                 setMessages((prev) => [...prev.slice(0, -1), assistantMsg]);
-                setLoading(false);
             }
         );
     }
+
+    async function loadMoreMessages() {
+        if (!selectedPersona || messages.length === 0) return;
+        const container = messagesRef.current;
+        if (!container) return;
+
+        const prevHeight = container.scrollHeight;
+        setLoading(true);
+
+        try {
+            const oldest = messages[0];
+            const more = await getChatHistory(selectedPersona._id, {
+                limit: 200,
+                before: oldest.createdAt,
+            });
+
+            setMessages((prev) => [...more, ...prev]);
+
+            // đợi React render xong
+            setTimeout(() => {
+                const newHeight = container.scrollHeight;
+                container.scrollTop = newHeight - prevHeight;
+            }, 0);
+        } catch (err) {
+            console.error("Không load thêm được tin cũ", err);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+
+    useEffect(() => {
+        const container = messagesRef.current;
+        if (!container) return;
+
+        const handleScroll = () => {
+            if (container.scrollTop === 0 && !loading) {
+                loadMoreMessages();
+            }
+        };
+
+        container.addEventListener("scroll", handleScroll);
+        return () => container.removeEventListener("scroll", handleScroll);
+    }, [messages, selectedPersona, loading]);
+
+
+
 
     useEffect(() => {
         const disableContextMenu = (e) => e.preventDefault();
@@ -237,7 +277,7 @@ export default function Chat({ user, onLogout }) {
 
                 {selectedPersona ? (
                     <>
-                        <div className="messages">
+                        <div className="messages" ref={messagesRef}>
                             {messages.map((m, i) => (
                                 <div key={i} className="msg-block">
                                     <div className={`msg ${m.role}`}>
@@ -379,8 +419,8 @@ export default function Chat({ user, onLogout }) {
             {confirmLogout && (
                 <ConfirmModal
                     message={"Bạn có chắc chắn muốn đăng xuất?"}
-                    onCancel={()=>setConfirmLogout(false)}
-                    onConfirm={()=>onLogout()}
+                    onCancel={() => setConfirmLogout(false)}
+                    onConfirm={() => onLogout()}
                 />
             )}
 

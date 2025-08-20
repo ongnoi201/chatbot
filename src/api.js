@@ -76,14 +76,21 @@ export async function sendChat(personaId, payload) {
     return res.json();
 }
 
-export async function getChatHistory(personaId) {
+export async function getChatHistory(personaId, { limit = 200, before } = {}) {
     const token = localStorage.getItem("token");
-    const res = await fetch(`${API_URL}/api/chat/${personaId}/history`, {
+
+    const params = new URLSearchParams();
+    if (limit) params.append("limit", limit);
+    if (before) params.append("before", before);
+
+    const res = await fetch(`${API_URL}/api/chat/${personaId}/history?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
     });
+
     if (!res.ok) throw new Error("Không lấy được lịch sử chat");
     return res.json();
 }
+
 
 export async function streamChat(personaId, payload, onDelta, onDone, onError) {
     const token = localStorage.getItem("token");
