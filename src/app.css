@@ -411,6 +411,13 @@ html,
     gap: 0.8rem;
 }
 
+.modal-form button{
+    padding: 5px 0;
+    background-color: #27ae60;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
 .modal-form input,
 .modal-form textarea,
 .modal-form select {
@@ -423,7 +430,7 @@ html,
 .modal-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 0.6rem;
+    gap: 1px;
     margin-top: 1rem;
 }
 

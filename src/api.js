@@ -201,3 +201,14 @@ export async function deletePersona(id) {
     return res.json();
 }
 
+export async function clearChatHistory(personaId) {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`${API_URL}/api/chat/${personaId}/history`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!res.ok) throw new Error("Xóa toàn bộ lịch sử chat thất bại");
+    return res.json();
+}
+

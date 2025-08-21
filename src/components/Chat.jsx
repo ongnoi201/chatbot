@@ -13,7 +13,8 @@ import {
     streamChat,
     deleteChatFrom,
     updatePersona,
-    deletePersona
+    deletePersona,
+    clearChatHistory
 } from "../api";
 import TypingIndicator from "./TypingIndicator";
 
@@ -31,6 +32,7 @@ export default function Chat({ user, onLogout }) {
     const [confirmLogout, setConfirmLogout] = useState(false);
     const [isCompact, setIsCompact] = useState(false);
     const [confirmDeletePersona, setConfirmDeletePersona] = useState(null);
+    const [confirmHistory, setConfirmHistory] = useState(null);
     const [formMode, setFormMode] = useState(null);
     const [loading, setLoading] = useState(false);
     const [closing, setClosing] = useState(false);
@@ -129,6 +131,22 @@ export default function Chat({ user, onLogout }) {
                 setMessages((prev) => [...prev.slice(0, -1), assistantMsg]);
             }
         );
+    }
+
+    async function onDeleteHistory(personaId) {
+        if (!personaId) return;
+        setLoading(true);
+        try {
+            await clearChatHistory(personaId);
+            setMessages([]);
+            alertify.success("Đã xóa toàn bộ lịch sử");
+        } catch (err) {
+            console.error("Xóa lịch sử lỗi", err);
+            alertify.error("Xóa thất bại");
+        } finally {
+            setLoading(false);
+            setConfirmHistory(null);
+        }
     }
 
     async function loadMoreMessages() {
@@ -424,11 +442,20 @@ export default function Chat({ user, onLogout }) {
                 />
             )}
 
+            {confirmHistory && (
+                <ConfirmModal
+                    message={"Bạn có chắc chắn muốn xóa toàn bộ lịch sử cuộc trò chuyện không?"}
+                    onCancel={() => setConfirmHistory(false)}
+                    onConfirm={() => onDeleteHistory(selectedPersona._id)}
+                />
+            )}
+
             {formMode && (
                 <PersonaFormModal
                     mode={formMode}
                     initialData={formMode === "edit" ? selectedPersona : null}
                     onClose={() => setFormMode(null)}
+                    onClearHistory={() => {setConfirmHistory(true); setFormMode(null);}}
                     onSubmit={async (data) => {
                         setLoading(true);
                         try {

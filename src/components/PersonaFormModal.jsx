@@ -6,12 +6,14 @@ export default function PersonaFormModal({
     initialData,
     onClose,
     onSubmit,
+    onClearHistory, // callback mới
     mode = "create"
 }) {
     const [showCropper, setShowCropper] = useState(false);
     const [tempImage, setTempImage] = useState(null);
     const [tempFile, setTempFile] = useState(null);
     const [closing, setClosing] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
 
     const [form, setForm] = useState({
         avatarUrl: "",
@@ -48,6 +50,7 @@ export default function PersonaFormModal({
     function handleSubmit(e) {
         e.preventDefault();
         onSubmit(form);
+        setIsEditing(false);
     }
 
     function handleClose() {
@@ -55,76 +58,126 @@ export default function PersonaFormModal({
         setTimeout(() => {
             onClose();
             setClosing(false);
-        }, 400); // khớp với animation-duration
+        }, 400);
     }
 
     return (
-        <div
-            className={`modal-overlay animate__animated ${closing ? "animate__fadeOut" : "animate__fadeIn"}`}
-            onClick={handleClose}
-        >
-            <div
-                className={`modal animate__animated ${closing ? "animate__zoomOut" : "animate__zoomIn"}`}
-                onClick={(e) => e.stopPropagation()}
-            >
+        <div className={`modal-overlay animate__animated ${closing ? "animate__fadeOut" : "animate__fadeIn"}`}>
+            <div className={`modal animate__animated ${closing ? "animate__zoomOut" : "animate__zoomIn"}`}>
                 <h3>{mode === "create" ? "Thêm Nhân Vật" : "Cài đặt Nhân Vật"}</h3>
+
                 <form onSubmit={handleSubmit} className="modal-form">
-                    <input
-                        type="file"
-                        name="avatar"
-                        accept="image/*"
-                        onChange={handleChange}
-                    />
-                    {form.avatarUrl && (
-                        <img src={form.avatarUrl} alt="preview" className="avatar-preview" />
+                    {/* Avatar */}
+                    {(mode === "create" || isEditing) ? (
+                        <>
+                            <input
+                                type="file"
+                                name="avatar"
+                                accept="image/*"
+                                onChange={handleChange}
+                            />
+                            {form.avatarUrl && (
+                                <img src={form.avatarUrl} alt="preview" className="avatar-preview" />
+                            )}
+                        </>
+                    ) : (
+                        form.avatarUrl && (
+                            <img src={form.avatarUrl} alt="avatar" className="avatar-preview" />
+                        )
                     )}
 
-                    <input
-                        name="name"
-                        placeholder="Tên"
-                        value={form.name}
-                        onChange={handleChange}
-                    />
+                    {/* Name */}
+                    {(mode === "create" || isEditing) ? (
+                        <input
+                            name="name"
+                            placeholder="Tên"
+                            value={form.name}
+                            onChange={handleChange}
+                        />
+                    ) : (
+                        <p><b>Tên:</b> {form.name}</p>
+                    )}
 
-                    <textarea
-                        name="description"
-                        placeholder="Mô tả"
-                        value={form.description}
-                        onChange={handleChange}
-                    />
+                    {/* Description */}
+                    {(mode === "create" || isEditing) ? (
+                        <textarea
+                            name="description"
+                            placeholder="Mô tả"
+                            value={form.description}
+                            onChange={handleChange}
+                        />
+                    ) : (
+                        <p><b>Mô tả:</b> {form.description}</p>
+                    )}
 
-                    <input
-                        name="tone"
-                        placeholder="Tone (vd: vui vẻ, nghiêm túc)"
-                        value={form.tone}
-                        onChange={handleChange}
-                    />
+                    {/* Tone */}
+                    {(mode === "create" || isEditing) ? (
+                        <input
+                            name="tone"
+                            placeholder="Tone (vd: vui vẻ, nghiêm túc)"
+                            value={form.tone}
+                            onChange={handleChange}
+                        />
+                    ) : (
+                        <p><b>Tone:</b> {form.tone}</p>
+                    )}
 
-                    <input
-                        name="style"
-                        placeholder="Style (vd: ngắn gọn, chi tiết)"
-                        value={form.style}
-                        onChange={handleChange}
-                    />
+                    {/* Style */}
+                    {(mode === "create" || isEditing) ? (
+                        <input
+                            name="style"
+                            placeholder="Style (vd: ngắn gọn, chi tiết)"
+                            value={form.style}
+                            onChange={handleChange}
+                        />
+                    ) : (
+                        <p><b>Style:</b> {form.style}</p>
+                    )}
 
-                    <select
-                        name="language"
-                        value={form.language}
-                        onChange={handleChange}
-                    >
-                        <option>Tiếng Việt</option>
-                        <option>English</option>
-                    </select>
+                    {/* Language */}
+                    {(mode === "create" || isEditing) ? (
+                        <select
+                            name="language"
+                            value={form.language}
+                            onChange={handleChange}
+                        >
+                            <option>Tiếng Việt</option>
+                            <option>English</option>
+                        </select>
+                    ) : (
+                        <p><b>Ngôn ngữ:</b> {form.language}</p>
+                    )}
 
-                    <div className="modal-actions">
-                        <button type="button" onClick={handleClose}>
-                            Hủy
-                        </button>
+                    {/* Submit only */}
+                    {(mode === "create" || isEditing) && (
                         <button type="submit">
                             {mode === "create" ? "Tạo" : "Lưu"}
                         </button>
-                    </div>
+                    )}
                 </form>
+
+                {/* Actions ngoài form */}
+                <div className="modal-actions">
+                    <button type="button" onClick={handleClose}>
+                        <i className="bi bi-x-square"></i> Đóng
+                    </button>
+
+                    {!isEditing && mode !== "create" && (
+                        <button type="button" onClick={() => setIsEditing(true)}>
+                            <i className="bi bi-pencil-square"></i> Sửa
+                        </button>
+                    )}
+
+                    {mode !== "create" && (
+                        <button
+                            type="button"
+                            className="delete-history-btn"
+                            onClick={()=>onClearHistory(initialData._id)}
+                        >
+                            <i className="bi bi-clock-history"></i> Xóa lịch sử
+                        </button>
+                    )}
+                </div>
             </div>
 
             {showCropper && (
