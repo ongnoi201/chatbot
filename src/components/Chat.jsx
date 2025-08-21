@@ -49,9 +49,6 @@ export default function Chat({ user, onLogout }) {
         try {
             const list = await getPersonas();
             setPersonas(list);
-            if (list.length > 0) {
-                await selectPersona(list[0]);
-            }
         } catch (err) {
             console.error("Lỗi khi load personas", err);
         } finally {

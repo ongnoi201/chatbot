@@ -16,6 +16,8 @@ html,
     -ms-user-select: none;
     user-select: none;
     -webkit-touch-callout: none;
+    overscroll-behavior-y: contain;
+    overscroll-behavior-x: none; 
 }
 
 /* ================= CHAT LAYOUT ================= */
