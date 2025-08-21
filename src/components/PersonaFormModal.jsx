@@ -157,7 +157,7 @@ export default function PersonaFormModal({
                 </form>
 
                 {/* Actions ngoài form */}
-                <div className="modal-actions">
+                <div className="modal-actions actions-btn">
                     <button style={{border: '1px solid #050e99ff' ,backgroundColor: 'transparent', color: '#050e99ff'}} type="button" onClick={handleClose}>
                         <i className="bi bi-x-square"></i> Đóng
                     </button>
