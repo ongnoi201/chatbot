@@ -301,7 +301,7 @@ html,
     border-radius: 10px;
     font-size: 16px;
     outline: none;
-    background-color: #ffffff52;
+    background-color: #ffffffa2;
 }
 
 .composer textarea:focus {
@@ -399,8 +399,8 @@ html,
     animation-duration: 0.5s;
 }
 
-
 .modal h3 {
+    margin-top: 65px;
     margin-bottom: 1rem;
     font-size: 1.3rem;
 }
@@ -428,28 +428,24 @@ html,
 }
 
 .modal-actions {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
+    align-items: center;
     justify-content: flex-end;
     gap: 1px;
     margin-top: 1rem;
 }
 
 .modal-actions button {
-    padding: 0.5rem 1rem;
+    width: 80px;
+    height: 60px;
     border: none;
     border-radius: 8px;
     cursor: pointer;
 }
-
-.modal-actions button[type="submit"] {
-    background: #4a90e2;
-    color: white;
-}
-
-.modal-actions button[type="submit"]:hover {
-    background: #357ABD;
-}
-
 
 .context-menu {
     position: absolute;

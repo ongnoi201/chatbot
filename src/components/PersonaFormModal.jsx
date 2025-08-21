@@ -158,23 +158,24 @@ export default function PersonaFormModal({
 
                 {/* Actions ngoài form */}
                 <div className="modal-actions">
-                    <button type="button" onClick={handleClose}>
+                    <button style={{border: '1px solid #050e99ff' ,backgroundColor: 'transparent', color: '#050e99ff'}} type="button" onClick={handleClose}>
                         <i className="bi bi-x-square"></i> Đóng
                     </button>
 
                     {!isEditing && mode !== "create" && (
-                        <button type="button" onClick={() => setIsEditing(true)}>
+                        <button style={{border: '1px solid #c07f07ff' ,backgroundColor: 'transparent', color: '#c07f07ff'}} type="button" onClick={() => setIsEditing(true)}>
                             <i className="bi bi-pencil-square"></i> Sửa
                         </button>
                     )}
 
                     {mode !== "create" && (
                         <button
+                            style={{border: '1px solid #940303ff' ,backgroundColor: 'transparent', color: '#940303ff'}}
                             type="button"
                             className="delete-history-btn"
                             onClick={()=>onClearHistory(initialData._id)}
                         >
-                            <i className="bi bi-clock-history"></i> Xóa lịch sử
+                            <i className="bi bi-clock-history"></i> Xóa
                         </button>
                     )}
                 </div>

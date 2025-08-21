@@ -7,6 +7,9 @@ export default function CropperModal({ image, originalFileName, onClose, onSave 
     const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
     const [closing, setClosing] = useState(false);
 
+    // 👇 state cho kích thước khung crop
+    const [cropSize, setCropSize] = useState({ width: 180, height: 320 });
+
     const onCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
         setCroppedAreaPixels(croppedAreaPixels);
     }, []);
@@ -79,12 +82,15 @@ export default function CropperModal({ image, originalFileName, onClose, onSave 
                         crop={crop}
                         zoom={zoom}
                         aspect={9 / 16}
+                        cropSize={cropSize}   // 👈 cho resize
                         onCropChange={setCrop}
                         onZoomChange={setZoom}
                         onCropComplete={onCropComplete}
                     />
                 </div>
 
+                {/* Zoom ảnh */}
+                <label>Zoom</label>
                 <input
                     type="range"
                     min={1}
@@ -92,6 +98,24 @@ export default function CropperModal({ image, originalFileName, onClose, onSave 
                     step={0.1}
                     value={zoom}
                     onChange={(e) => setZoom(Number(e.target.value))}
+                />
+
+                {/* Resize khung crop */}
+                <br></br>
+                <label>Khung cắt</label>
+                <input
+                    type="range"
+                    min={100}
+                    max={300}
+                    step={10}
+                    value={cropSize.width}
+                    onChange={(e) => {
+                        const newWidth = Number(e.target.value);
+                        setCropSize({
+                            width: newWidth,
+                            height: Math.round(newWidth * 16 / 9), // 👈 giữ đúng tỉ lệ 9:16
+                        });
+                    }}
                 />
 
                 <div className="modal-actions">

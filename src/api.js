@@ -162,14 +162,16 @@ export async function deleteChatFrom(personaId, index) {
 export async function updatePersona(id, data) {
     const token = localStorage.getItem("token");
     const formData = new FormData();
-    if (data.avatar) {
+    if (data.avatar instanceof File) {
         formData.append("avatar", data.avatar);
     }
+
     if (data.name !== undefined) formData.append("name", data.name);
     if (data.description !== undefined) formData.append("description", data.description);
     if (data.tone !== undefined) formData.append("tone", data.tone);
     if (data.style !== undefined) formData.append("style", data.style);
     if (data.language !== undefined) formData.append("language", data.language);
+
     if (data.rules) {
         if (Array.isArray(data.rules)) {
             data.rules.forEach((r) => formData.append("rules", r));
@@ -181,14 +183,19 @@ export async function updatePersona(id, data) {
     const res = await fetch(`${API_URL}/api/personas/${id}`, {
         method: "PUT",
         headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${token}`, 
         },
         body: formData,
     });
 
-    if (!res.ok) throw new Error("Cập nhật persona thất bại");
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Cập nhật persona thất bại");
+    }
+
     return res.json();
 }
+
 
 export async function deletePersona(id) {
     const token = localStorage.getItem("token");
