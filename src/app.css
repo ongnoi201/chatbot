@@ -429,7 +429,7 @@ html,
     font-size: 0.95rem;
 }
 
-.modal-actions {
+.actions-btn {
     position: absolute;
     top: 0;
     left: 50%;
