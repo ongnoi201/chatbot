@@ -378,7 +378,10 @@ export default function Chat({ user, onLogout }) {
                         )}
                     </>
                 ) : (
-                    <div className="empty">Chọn hoặc tạo một nhân vật để bắt đầu chat</div>
+                    <>
+                        <button className="empty2" onClick={() => setFormMode("create")}><i className="bi bi-plus-circle-dotted"></i></button>
+                        <div className="empty">Chọn hoặc tạo một nhân vật để bắt đầu chat</div>
+                    </>
                 )}
             </main>
 
@@ -452,7 +455,7 @@ export default function Chat({ user, onLogout }) {
                     mode={formMode}
                     initialData={formMode === "edit" ? selectedPersona : null}
                     onClose={() => setFormMode(null)}
-                    onClearHistory={() => {setConfirmHistory(true); setFormMode(null);}}
+                    onClearHistory={() => { setConfirmHistory(true); setFormMode(null); }}
                     onSubmit={async (data) => {
                         setLoading(true);
                         try {

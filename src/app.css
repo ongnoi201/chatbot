@@ -376,6 +376,18 @@ html,
     color: #777;
     font-size: 0.95rem;
     font-style: italic;
+    margin-top: 20px;
+}
+
+.empty2 {
+    font-size: 50px;
+    background-color: transparent;
+    border: none;
+    color: #27ae60;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 /* ================= MODAL ================= */
