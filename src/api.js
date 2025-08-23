@@ -119,7 +119,7 @@ export async function streamChat(personaId, payload, onDelta, onDone, onError) {
 
             buffer += decoder.decode(value, { stream: true });
             let parts = buffer.split("\n\n");
-            buffer = parts.pop(); 
+            buffer = parts.pop();
             for (const part of parts) {
                 if (part.startsWith("data:")) {
                     try {
@@ -183,7 +183,7 @@ export async function updatePersona(id, data) {
     const res = await fetch(`${API_URL}/api/personas/${id}`, {
         method: "PUT",
         headers: {
-            Authorization: `Bearer ${token}`, 
+            Authorization: `Bearer ${token}`,
         },
         body: formData,
     });
@@ -218,4 +218,62 @@ export async function clearChatHistory(personaId) {
     if (!res.ok) throw new Error("Xóa toàn bộ lịch sử chat thất bại");
     return res.json();
 }
+
+export async function getLastMessages() {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`${API_URL}/api/personas/last-messages`, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error("Không lấy được tin nhắn cuối cùng");
+    return res.json();
+}
+
+export async function subscribeUserToPush(vapidPublicKey) {
+    const token = localStorage.getItem("token");
+    if (!("serviceWorker" in navigator)) {
+        alert("Trình duyệt không hỗ trợ Push Notification");
+        return;
+    }
+
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") {
+        alert("Bạn cần cho phép thông báo để nhận tin nhắn");
+        return;
+    }
+
+    const registration = await navigator.serviceWorker.ready;
+
+    // 🚨 XÓA SUBSCRIPTION CŨ NẾU CÓ
+    const oldSub = await registration.pushManager.getSubscription();
+    if (oldSub) {
+        await oldSub.unsubscribe();
+    }
+
+    // Đăng ký subscription mới với VAPID public key mới
+    const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+    });
+
+    await fetch(`${API_URL}/api/subscribe`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ subscription }),
+    });
+}
+
+
+function urlBase64ToUint8Array(base64String) {
+    if (!base64String) throw new Error("VAPID public key is missing!");
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+    const rawData = window.atob(base64);
+    return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
+}
+
+
+
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { login, register } from "../api";
+import { login, register, subscribeUserToPush } from "../api";
 import './Auth.css';
 import alertify from "alertifyjs";
 import "alertifyjs/build/css/alertify.css";
@@ -10,7 +10,7 @@ export default function Auth({ onAuth }) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [name, setName] = useState("");
-    
+
     alertify.set('notifier', 'position', 'top-right');
     alertify.set('notifier', 'delay', 3);
 
@@ -25,6 +25,9 @@ export default function Auth({ onAuth }) {
             }
             localStorage.setItem("token", data.token);
             localStorage.setItem("user", JSON.stringify(data.user));
+            const clientVapidKey = import.meta.env.VITE_APP_VAPID_PUBLIC_KEY;
+            console.log("🔑 Client VAPID Public Key being used:", clientVapidKey);
+            subscribeUserToPush(clientVapidKey);
             onAuth(data.user);
         } catch (err) {
             alertify.error(err.message);

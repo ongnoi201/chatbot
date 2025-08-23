@@ -5,7 +5,7 @@ import ConfirmModal from "./ConfirmModal";
 import "alertifyjs/build/css/alertify.css";
 import "alertifyjs/build/css/themes/default.css";
 import PersonaFormModal from "./PersonaFormModal";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import {
     getPersonas,
     createPersona,
@@ -14,7 +14,8 @@ import {
     deleteChatFrom,
     updatePersona,
     deletePersona,
-    clearChatHistory
+    clearChatHistory,
+    getLastMessages
 } from "../api";
 import TypingIndicator from "./TypingIndicator";
 
@@ -36,6 +37,7 @@ export default function Chat({ user, onLogout }) {
     const [formMode, setFormMode] = useState(null);
     const [loading, setLoading] = useState(false);
     const [closing, setClosing] = useState(false);
+    const [unreadPersonas, setUnreadPersonas] = useState(new Set());
 
     alertify.set("notifier", "position", "top-right");
     alertify.set("notifier", "delay", 3);
@@ -43,6 +45,39 @@ export default function Chat({ user, onLogout }) {
     useEffect(() => {
         loadPersonas();
     }, []);
+
+    const checkUnreadMessages = useCallback(async () => {
+        try {
+            const latestMessages = await getLastMessages();
+            const lastViewed = JSON.parse(localStorage.getItem('lastViewedPersonas')) || {};
+            const newUnread = new Set();
+            for (const personaId in latestMessages) {
+                const latestMsg = latestMessages[personaId];
+                const lastViewedTime = lastViewed[personaId];
+                if (latestMsg.role === 'assistant' && 
+                    (!lastViewedTime || new Date(latestMsg.createdAt) > new Date(lastViewedTime))) {
+                    if (selectedPersona?._id !== personaId) {
+                        newUnread.add(personaId);
+                    }
+                }
+            }
+            setUnreadPersonas(newUnread);
+        } catch (error) {
+            console.error("Lỗi kiểm tra tin nhắn chưa đọc:", error);
+        }
+    }, [selectedPersona]);
+
+    useEffect(() => {
+        async function initialLoad() {
+            await loadPersonas();
+            await checkUnreadMessages();
+        }
+        initialLoad();
+        window.addEventListener('visibilitychange', checkUnreadMessages);
+        return () => {
+            window.removeEventListener('visibilitychange', checkUnreadMessages);
+        };
+    }, [checkUnreadMessages]);
 
     async function loadPersonas() {
         setLoading(true);
@@ -56,7 +91,15 @@ export default function Chat({ user, onLogout }) {
         }
     }
 
-    async function selectPersona(p) {
+     async function selectPersona(p) {
+        const lastViewed = JSON.parse(localStorage.getItem('lastViewedPersonas')) || {};
+        lastViewed[p._id] = new Date().toISOString();
+        localStorage.setItem('lastViewedPersonas', JSON.stringify(lastViewed));
+        if (unreadPersonas.has(p._id)) {
+            const newUnread = new Set(unreadPersonas);
+            newUnread.delete(p._id);
+            setUnreadPersonas(newUnread);
+        }
         setSelectedPersona(p);
         setLoading(true);
         try {
@@ -257,6 +300,7 @@ export default function Chat({ user, onLogout }) {
                                 >
                                     <img src={p.avatarUrl} alt="Ảnh nhân vật" />
                                     <p>{p.name}</p>
+                                    {unreadPersonas.has(p._id) && <div className="unread-dot"></div>}
                                 </div>
                             ))}
                         </div>

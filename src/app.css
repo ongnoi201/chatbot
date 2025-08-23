@@ -346,6 +346,19 @@ html,
     display: flex;
     align-items: center;
     gap: 10px;
+    position: relative;
+}
+
+.unread-dot {
+    position: absolute;
+    top: 10px;      /* Căn chỉnh vị trí tùy ý */
+    right: 15px;    /* Căn chỉnh vị trí tùy ý */
+    width: 10px;
+    height: 10px;
+    background-color: #e74c3c; /* Màu đỏ */
+    border-radius: 50%;
+    border: 1.5px solid white; /* Thêm viền trắng cho đẹp */
+    box-shadow: 0 0 5px rgba(231, 76, 60, 0.8);
 }
 
 .persona-item img {
