@@ -17,7 +17,7 @@ html,
     user-select: none;
     -webkit-touch-callout: none;
     overscroll-behavior-y: contain;
-    overscroll-behavior-x: none; 
+    overscroll-behavior-x: none;
 }
 
 /* ================= CHAT LAYOUT ================= */
@@ -351,13 +351,17 @@ html,
 
 .unread-dot {
     position: absolute;
-    top: 10px;      /* Căn chỉnh vị trí tùy ý */
-    right: 15px;    /* Căn chỉnh vị trí tùy ý */
+    top: 10px;
+    /* Căn chỉnh vị trí tùy ý */
+    right: 15px;
+    /* Căn chỉnh vị trí tùy ý */
     width: 10px;
     height: 10px;
-    background-color: #e74c3c; /* Màu đỏ */
+    background-color: #e74c3c;
+    /* Màu đỏ */
     border-radius: 50%;
-    border: 1.5px solid white; /* Thêm viền trắng cho đẹp */
+    border: 1.5px solid white;
+    /* Thêm viền trắng cho đẹp */
     box-shadow: 0 0 5px rgba(231, 76, 60, 0.8);
 }
 
@@ -438,11 +442,12 @@ html,
     gap: 0.8rem;
 }
 
-.modal-form button{
-    padding: 5px 0;
+.modal-form button {
+    padding: 8px 0;
     background-color: #27ae60;
     border: 1px solid #ccc;
     border-radius: 6px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
 .modal-form input,
@@ -571,4 +576,43 @@ html,
         position: relative;
         transform: none !important;
     }
+}
+
+/* Time section */
+.time-section {
+    margin-top: 12px;
+}
+
+.time-item {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.time-item input[type="time"] {
+    padding: 4px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    margin-top: 5px;
+}
+
+.remove-btn {
+    background: #ff4d4d !important;
+    color: white;
+    border: none;
+    padding: 4px 8px !important;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.add-time-btn {
+    margin-top: 6px;
+    padding: 6px 10px !important;
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
 }

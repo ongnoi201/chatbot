@@ -26,7 +26,6 @@ export default function Auth({ onAuth }) {
             localStorage.setItem("token", data.token);
             localStorage.setItem("user", JSON.stringify(data.user));
             const clientVapidKey = import.meta.env.VITE_APP_VAPID_PUBLIC_KEY;
-            console.log("🔑 Client VAPID Public Key being used:", clientVapidKey);
             subscribeUserToPush(clientVapidKey);
             onAuth(data.user);
         } catch (err) {

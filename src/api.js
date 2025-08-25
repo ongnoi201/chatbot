@@ -1,7 +1,28 @@
 const API_URL = import.meta.env.VITE_API_BASE || "http://localhost:5050";
 
+async function apiFetch(url, options = {}, onAuth) {
+    const token = localStorage.getItem("token");
+    const headers = {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...options.headers,
+    };
+
+    const res = await fetch(url, { ...options, headers });
+
+    if (res.status === 401) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        onAuth(null);
+        throw new Error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
+    }
+
+    return res;
+}
+
+
 export async function register(data) {
-    const res = await fetch(`${API_URL}/api/users/register`, {
+    const res = await apiFetch(`${API_URL}/api/users/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -11,7 +32,7 @@ export async function register(data) {
 }
 
 export async function login(data) {
-    const res = await fetch(`${API_URL}/api/users/login`, {
+    const res = await apiFetch(`${API_URL}/api/users/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -41,11 +62,20 @@ export async function createPersona(data) {
     formData.append("tone", data.tone || "");
     formData.append("style", data.style || "");
     formData.append("language", data.language || "");
+
     if (data.rules) {
         if (Array.isArray(data.rules)) {
             data.rules.forEach((r) => formData.append("rules", r));
         } else {
             formData.append("rules", data.rules);
+        }
+    }
+
+    if (data.autoMessageTimes) {
+        if (Array.isArray(data.autoMessageTimes)) {
+            data.autoMessageTimes.forEach((t) => formData.append("autoMessageTimes", t));
+        } else {
+            formData.append("autoMessageTimes", data.autoMessageTimes);
         }
     }
 
@@ -162,10 +192,10 @@ export async function deleteChatFrom(personaId, index) {
 export async function updatePersona(id, data) {
     const token = localStorage.getItem("token");
     const formData = new FormData();
+
     if (data.avatar instanceof File) {
         formData.append("avatar", data.avatar);
     }
-
     if (data.name !== undefined) formData.append("name", data.name);
     if (data.description !== undefined) formData.append("description", data.description);
     if (data.tone !== undefined) formData.append("tone", data.tone);
@@ -177,6 +207,14 @@ export async function updatePersona(id, data) {
             data.rules.forEach((r) => formData.append("rules", r));
         } else {
             formData.append("rules", data.rules);
+        }
+    }
+
+    if (data.autoMessageTimes) {
+        if (Array.isArray(data.autoMessageTimes)) {
+            data.autoMessageTimes.forEach((t) => formData.append("autoMessageTimes", t));
+        } else {
+            formData.append("autoMessageTimes", data.autoMessageTimes);
         }
     }
 

@@ -233,9 +233,6 @@ export default function Chat({ user, onLogout }) {
         return () => container.removeEventListener("scroll", handleScroll);
     }, [messages, selectedPersona, loading]);
 
-
-
-
     useEffect(() => {
         const disableContextMenu = (e) => e.preventDefault();
         document.addEventListener("contextmenu", disableContextMenu);

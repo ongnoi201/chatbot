@@ -6,7 +6,7 @@ export default function PersonaFormModal({
     initialData,
     onClose,
     onSubmit,
-    onClearHistory, // callback mới
+    onClearHistory,
     mode = "create"
 }) {
     const [showCropper, setShowCropper] = useState(false);
@@ -23,6 +23,7 @@ export default function PersonaFormModal({
         style: "",
         language: "Tiếng Việt",
         avatar: null,
+        autoMessageTimes: [], // ⏰ nhiều giờ
     });
 
     useEffect(() => {
@@ -30,6 +31,7 @@ export default function PersonaFormModal({
             setForm((prev) => ({
                 ...prev,
                 ...initialData,
+                autoMessageTimes: initialData.autoMessageTimes || [],
             }));
         }
     }, [initialData]);
@@ -45,6 +47,24 @@ export default function PersonaFormModal({
         } else {
             setForm({ ...form, [name]: value });
         }
+    }
+
+    // thêm giờ
+    function addTime() {
+        setForm({ ...form, autoMessageTimes: [...form.autoMessageTimes, ""] });
+    }
+
+    // thay đổi giờ
+    function handleTimeChange(index, value) {
+        const updated = [...form.autoMessageTimes];
+        updated[index] = value;
+        setForm({ ...form, autoMessageTimes: updated });
+    }
+
+    // xoá giờ
+    function removeTime(index) {
+        const updated = form.autoMessageTimes.filter((_, i) => i !== index);
+        setForm({ ...form, autoMessageTimes: updated });
     }
 
     function handleSubmit(e) {
@@ -147,6 +167,29 @@ export default function PersonaFormModal({
                     ) : (
                         <p><b>Ngôn ngữ:</b> {form.language}</p>
                     )}
+
+                    {/* Auto Message Times */}
+                    <div className="time-section">
+                        <label><b>Thời gian tự động gửi:</b></label>
+                        {(mode === "create" || isEditing) ? (
+                            <div>
+                                {form.autoMessageTimes.map((time, index) => (
+                                    <div key={index} className="time-item">
+                                        <input
+                                            type="time"
+                                            lang="vi"
+                                            value={time}
+                                            onChange={(e) => handleTimeChange(index, e.target.value)}
+                                        />
+                                        <button type="button" className="remove-btn" onClick={() => removeTime(index)}>✖</button>
+                                    </div>
+                                ))}
+                                <button type="button" className="add-time-btn" onClick={addTime}>Thêm giờ</button>
+                            </div>
+                        ) : (
+                            <p>{form.autoMessageTimes.length > 0 ? form.autoMessageTimes.join(", ") : "Chưa đặt"}</p>
+                        )}
+                    </div>
 
                     {/* Submit only */}
                     {(mode === "create" || isEditing) && (
