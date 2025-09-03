@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <title>LocalStorage Manager</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/css/alertify.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/alertify.min.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --danger: #dc2626;
+            --bg: #f9fafb;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 15px;
+            background: var(--bg);
+            color: #111;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            user-select: none;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 35px;
+            color: #000
+        }
+
+        #controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background 0.2s;
+            color: #fff;
+        }
+
+        #load {
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+
+        #add {
+            color: #16a34a;
+            border: 1px solid #16a34a;
+        }
+
+        #load:hover {
+            border: #1e40af;
+        }
+
+        #add:hover {
+            border: #15803d;
+        }
+
+        #result {
+            display: grid;
+            gap: 12px;
+        }
+
+        .item {
+            background: var(--card-bg);
+            padding: 12px;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .key {
+            font-weight: 600;
+            font-size: 16px;
+            color: #374151;
+            word-break: break-all;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            resize: vertical;
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: monospace;
+            background: #f3f4f6;
+            white-space: pre;
+            box-sizing: border-box;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .saveBtn {
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .delBtn {
+            border: 1px solid var(--danger);
+            color: var(--danger);
+        }
+
+        .saveBtn:hover {
+            background: #1e40af;
+        }
+
+        .delBtn:hover {
+            background: #991b1b;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            button {
+                flex: 1;
+                font-size: 14px;
+            }
+
+            textarea {
+                font-size: 13px;
+            }
+        }
+
+        .alertify-notifier .ajs-message {
+            text-align: center;
+            min-width: auto !important;
+            padding: 8px 16px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Quản lý LocalStorage</h2>
+    <div id="controls">
+        <button id="load">🔄 Tải dữ liệu</button>
+        <button id="add">➕ Thêm biến mới</button>
+    </div>
+    <div id="result"></div>
+
+    <script>
+        alertify.set('notifier', 'position', 'bottom-center');
+        function tryFormatJSON(value) {
+            try {
+                let obj = JSON.parse(value);
+                return JSON.stringify(obj, null, 2); // pretty print
+            } catch {
+                return value; // không phải JSON → giữ nguyên
+            }
+        }
+
+        function render() {
+            const resultDiv = document.getElementById("result");
+            resultDiv.innerHTML = "";
+
+            if (localStorage.length === 0) {
+                resultDiv.innerHTML = "<p style='text-align:center;color:#6b7280'>Không có dữ liệu trong LocalStorage</p>";
+                return;
+            }
+
+            for (let i = 0; i < localStorage.length; i++) {
+                let key = localStorage.key(i);
+                let value = localStorage.getItem(key);
+
+                let itemDiv = document.createElement("div");
+                itemDiv.className = "item";
+
+                let keyDiv = document.createElement("div");
+                keyDiv.className = "key";
+                keyDiv.textContent = key;
+
+                let textarea = document.createElement("textarea");
+                textarea.value = tryFormatJSON(value);
+
+                let actionsDiv = document.createElement("div");
+                actionsDiv.className = "actions";
+
+                let saveBtn = document.createElement("button");
+                saveBtn.textContent = "💾 Lưu";
+                saveBtn.className = "saveBtn";
+                saveBtn.onclick = () => {
+                    let newVal = textarea.value;
+                    try {
+                        // thử parse lại JSON
+                        let parsed = JSON.parse(newVal);
+                        newVal = JSON.stringify(parsed); // nén lại gọn để lưu
+                    } catch {
+                        // không phải JSON, lưu thẳng string
+                    }
+                    localStorage.setItem(key, newVal);
+                    alertify.success("Đã lưu");
+                };
+
+                let delBtn = document.createElement("button");
+                delBtn.textContent = "🗑 Xóa";
+                delBtn.className = "delBtn";
+                delBtn.onclick = () => {
+                    if (confirm(`Xóa biến "${key}"?`)) {
+                        localStorage.removeItem(key);
+                        render();
+                    }
+                };
+
+                actionsDiv.appendChild(saveBtn);
+                actionsDiv.appendChild(delBtn);
+
+                itemDiv.appendChild(keyDiv);
+                itemDiv.appendChild(textarea);
+                itemDiv.appendChild(actionsDiv);
+
+                resultDiv.appendChild(itemDiv);
+            }
+        }
+
+        document.getElementById("load").addEventListener("click", render);
+        document.getElementById("add").addEventListener("click", () => {
+            const key = prompt("Nhập tên key:");
+            if (!key) return;
+            const value = prompt("Nhập giá trị (chuỗi hoặc JSON):") || "";
+            localStorage.setItem(key, value);
+            render();
+        });
+
+        render();
+    </script>
+</body>
+
+</html>

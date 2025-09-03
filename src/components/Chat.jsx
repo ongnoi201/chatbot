@@ -54,7 +54,7 @@ export default function Chat({ user, onLogout }) {
             for (const personaId in latestMessages) {
                 const latestMsg = latestMessages[personaId];
                 const lastViewedTime = lastViewed[personaId];
-                if (latestMsg.role === 'assistant' && 
+                if (latestMsg.role === 'assistant' &&
                     (!lastViewedTime || new Date(latestMsg.createdAt) > new Date(lastViewedTime))) {
                     if (selectedPersona?._id !== personaId) {
                         newUnread.add(personaId);
@@ -83,7 +83,13 @@ export default function Chat({ user, onLogout }) {
         setLoading(true);
         try {
             const list = await getPersonas();
-            setPersonas(list);
+            const stored = JSON.parse(localStorage.getItem("personaBackgrounds") || "{}");
+            const merged = list.map(p => ({
+                ...p,
+                background: stored[p._id] ?? false
+            }));
+
+            setPersonas(merged);
         } catch (err) {
             console.error("Lỗi khi load personas", err);
         } finally {
@@ -91,7 +97,8 @@ export default function Chat({ user, onLogout }) {
         }
     }
 
-     async function selectPersona(p) {
+
+    async function selectPersona(p) {
         const lastViewed = JSON.parse(localStorage.getItem('lastViewedPersonas')) || {};
         lastViewed[p._id] = new Date().toISOString();
         localStorage.setItem('lastViewedPersonas', JSON.stringify(lastViewed));
@@ -239,6 +246,10 @@ export default function Chat({ user, onLogout }) {
         return () => document.removeEventListener("contextmenu", disableContextMenu);
     }, []);
 
+    const handleRedirect = () => {
+        window.location.href = '/tool.html';
+    };
+
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: "instant", block: "end" });
     }, [messages]);
@@ -247,9 +258,10 @@ export default function Chat({ user, onLogout }) {
         <div
             className="wrap"
             style={{
-                "--wrap-bg": selectedPersona?.avatarUrl
-                    ? `url(${selectedPersona.avatarUrl})`
-                    : "none",
+                "--wrap-bg":
+                    selectedPersona?.avatarUrl && selectedPersona?.background
+                        ? `url(${selectedPersona.avatarUrl})`
+                        : "none",
             }}
         >
             {loading && (
@@ -283,7 +295,7 @@ export default function Chat({ user, onLogout }) {
                     }}
                 >
                     <div className="sidebar-top">
-                        <center><h2>Nhân vật</h2></center>
+                        <center><h2>Nhân <span onClick={handleRedirect}>vật</span></h2></center>
                         <button className="add-persona" onClick={() => setFormMode("create")}>Tạo Nhân Vật Mới</button>
                         <div className="persona-list">
                             {personas.map((p) => (
@@ -505,19 +517,27 @@ export default function Chat({ user, onLogout }) {
                                     ...data,
                                     rules: [],
                                 });
-                                setPersonas((prev) => [...prev, created]);
-                                setSelectedPersona(created);
+
+                                // ✅ giữ background trong state
+                                const personaWithBg = { ...created, background: data.background };
+
+                                setPersonas((prev) => [...prev, personaWithBg]);
+                                setSelectedPersona(personaWithBg);
                             } else if (formMode === "edit") {
                                 const updated = await updatePersona(
                                     selectedPersona._id,
                                     data
                                 );
+
+                                // ✅ giữ background trong state
+                                const personaWithBg = { ...updated, background: data.background };
+
                                 setPersonas((prev) =>
                                     prev.map((p) =>
-                                        p._id === updated._id ? updated : p
+                                        p._id === updated._id ? personaWithBg : p
                                     )
                                 );
-                                setSelectedPersona(updated);
+                                setSelectedPersona(personaWithBg);
                             }
                         } catch (err) {
                             alertify.error(

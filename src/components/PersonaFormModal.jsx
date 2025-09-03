@@ -15,26 +15,52 @@ export default function PersonaFormModal({
     const [closing, setClosing] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
 
-    const [form, setForm] = useState({
-        avatarUrl: "",
-        name: "",
-        description: "",
-        tone: "",
-        style: "",
-        language: "Tiếng Việt",
-        avatar: null,
-        autoMessageTimes: [], // ⏰ nhiều giờ
+    const [form, setForm] = useState(() => {
+        if (initialData?._id) {
+            const stored = JSON.parse(localStorage.getItem("personaBackgrounds") || "{}");
+            return {
+                ...initialData,
+                autoMessageTimes: initialData.autoMessageTimes || [],
+                background: stored[initialData._id] ?? initialData.background ?? false,
+            };
+        }
+        return {
+            avatarUrl: "",
+            name: "",
+            description: "",
+            tone: "",
+            style: "",
+            language: "Tiếng Việt",
+            avatar: null,
+            autoMessageTimes: [],
+            background: false,
+        };
     });
 
+    // Load dữ liệu ban đầu
     useEffect(() => {
         if (initialData) {
+            const stored = JSON.parse(localStorage.getItem("personaBackgrounds") || "{}");
+            const bg = stored[initialData._id] !== undefined
+                ? stored[initialData._id]
+                : (initialData.background ?? false);
+
             setForm((prev) => ({
                 ...prev,
                 ...initialData,
                 autoMessageTimes: initialData.autoMessageTimes || [],
+                background: bg,
             }));
         }
     }, [initialData]);
+
+    useEffect(() => {
+        if (initialData?._id) {
+            const stored = JSON.parse(localStorage.getItem("personaBackgrounds") || "{}");
+            stored[initialData._id] = form.background;
+            localStorage.setItem("personaBackgrounds", JSON.stringify(stored));
+        }
+    }, [form.background, initialData]);
 
     function handleChange(e) {
         const { name, value, files } = e.target;
@@ -49,19 +75,22 @@ export default function PersonaFormModal({
         }
     }
 
+    // toggle background
+    function handleBackgroundToggle() {
+        setForm({ ...form, background: !form.background });
+    }
+
     // thêm giờ
     function addTime() {
         setForm({ ...form, autoMessageTimes: [...form.autoMessageTimes, ""] });
     }
 
-    // thay đổi giờ
     function handleTimeChange(index, value) {
         const updated = [...form.autoMessageTimes];
         updated[index] = value;
         setForm({ ...form, autoMessageTimes: updated });
     }
 
-    // xoá giờ
     function removeTime(index) {
         const updated = form.autoMessageTimes.filter((_, i) => i !== index);
         setForm({ ...form, autoMessageTimes: updated });
@@ -97,12 +126,25 @@ export default function PersonaFormModal({
                                 onChange={handleChange}
                             />
                             {form.avatarUrl && (
-                                <img src={form.avatarUrl} alt="preview" className="avatar-preview" />
+                                <>
+                                    <img src={form.avatarUrl} alt="preview" className="avatar-preview" />
+                                    {/* ✅ checkbox background */}
+                                    <label>
+                                        <input
+                                            type="checkbox"
+                                            checked={form.background}
+                                            onChange={handleBackgroundToggle}
+                                        />  Đặt ảnh làm nền
+                                    </label>
+                                </>
                             )}
                         </>
                     ) : (
                         form.avatarUrl && (
-                            <img src={form.avatarUrl} alt="avatar" className="avatar-preview" />
+                            <>
+                                <img src={form.avatarUrl} alt="avatar" className="avatar-preview" />
+                                {form.background && <p>Đã đặt ảnh nền</p>}
+                            </>
                         )
                     )}
 
@@ -201,22 +243,22 @@ export default function PersonaFormModal({
 
                 {/* Actions ngoài form */}
                 <div className="modal-actions actions-btn">
-                    <button style={{border: '1px solid #050e99ff' ,backgroundColor: 'transparent', color: '#050e99ff'}} type="button" onClick={handleClose}>
+                    <button style={{ border: '1px solid #050e99ff', backgroundColor: 'transparent', color: '#050e99ff' }} type="button" onClick={handleClose}>
                         <i className="bi bi-x-square"></i> Đóng
                     </button>
 
                     {!isEditing && mode !== "create" && (
-                        <button style={{border: '1px solid #c07f07ff' ,backgroundColor: 'transparent', color: '#c07f07ff'}} type="button" onClick={() => setIsEditing(true)}>
+                        <button style={{ border: '1px solid #c07f07ff', backgroundColor: 'transparent', color: '#c07f07ff' }} type="button" onClick={() => setIsEditing(true)}>
                             <i className="bi bi-pencil-square"></i> Sửa
                         </button>
                     )}
 
                     {mode !== "create" && (
                         <button
-                            style={{border: '1px solid #940303ff' ,backgroundColor: 'transparent', color: '#940303ff'}}
+                            style={{ border: '1px solid #940303ff', backgroundColor: 'transparent', color: '#940303ff' }}
                             type="button"
                             className="delete-history-btn"
-                            onClick={()=>onClearHistory(initialData._id)}
+                            onClick={() => onClearHistory(initialData._id)}
                         >
                             <i className="bi bi-clock-history"></i> Xóa
                         </button>

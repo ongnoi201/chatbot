@@ -469,6 +469,7 @@ html,
     justify-content: flex-end;
     gap: 1px;
     margin-top: 1rem;
+    z-index: 99999;
 }
 
 .actions-btn button {
