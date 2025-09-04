@@ -247,7 +247,7 @@ export default function Chat({ user, onLogout }) {
     }, []);
 
     const handleRedirect = () => {
-        window.location.href = '/tool.html';
+        window.location.href = 'tool.html';
     };
 
     useEffect(() => {
