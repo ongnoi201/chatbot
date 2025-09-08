@@ -18,8 +18,10 @@ import {
     getLastMessages
 } from "../api";
 import TypingIndicator from "./TypingIndicator";
+import { useNavigate } from "react-router-dom";
+import LoadingSpinner from "./LoadingSpinner";
 
-export default function Chat({ user, onLogout }) {
+export default function Chat({ user }) {
     const bottomRef = useRef(null);
     const messagesRef = useRef(null);
     const [personas, setPersonas] = useState([]);
@@ -30,7 +32,6 @@ export default function Chat({ user, onLogout }) {
     const [contextMenu, setContextMenu] = useState(null);
     const [confirmDelete, setConfirmDelete] = useState(null);
     const [showSidebar, setShowSidebar] = useState(false);
-    const [confirmLogout, setConfirmLogout] = useState(false);
     const [isCompact, setIsCompact] = useState(false);
     const [confirmDeletePersona, setConfirmDeletePersona] = useState(null);
     const [confirmHistory, setConfirmHistory] = useState(null);
@@ -38,8 +39,9 @@ export default function Chat({ user, onLogout }) {
     const [loading, setLoading] = useState(false);
     const [closing, setClosing] = useState(false);
     const [unreadPersonas, setUnreadPersonas] = useState(new Set());
+    const navigate = useNavigate();
 
-    alertify.set("notifier", "position", "top-right");
+    alertify.set("notifier", "position", "bottom-center");
     alertify.set("notifier", "delay", 3);
 
     useEffect(() => {
@@ -108,7 +110,7 @@ export default function Chat({ user, onLogout }) {
             setUnreadPersonas(newUnread);
         }
         setSelectedPersona(p);
-        setMessages([]);  
+        setMessages([]);
         setLoading(true);
         try {
             const history = await getChatHistory(p._id);
@@ -265,11 +267,7 @@ export default function Chat({ user, onLogout }) {
                         : "none",
             }}
         >
-            {loading && (
-                <div className="loading-overlay">
-                    <div className="spinner"></div>
-                </div>
-            )}
+            {loading && <LoadingSpinner />}
 
             <button
                 className="toggle-sidebar"
@@ -316,8 +314,8 @@ export default function Chat({ user, onLogout }) {
                         </div>
                     </div>
                     <div className="sidebar-bottom">
-                        <button className="logout-btn" onClick={() => setConfirmLogout(true)}>
-                            <i className="bi bi-box-arrow-right"></i> Đăng xuất
+                        <button className="personal-btn" onClick={() => navigate('/profile')}>
+                            <i className="bi bi-box-arrow-right"></i> {user.name}
                         </button>
                     </div>
                 </aside>
@@ -368,7 +366,7 @@ export default function Chat({ user, onLogout }) {
                                         <button
                                             title="Delete"
                                             onClick={() =>
-                                                setConfirmDelete({ personaId: selectedPersona._id, index: i })
+                                                setConfirmDelete({ personaId: selectedPersona._id, messageId: m._id })
                                             }
                                         >
                                             <i className="bi bi-trash"></i>
@@ -425,7 +423,13 @@ export default function Chat({ user, onLogout }) {
                                     setContextMenu(null);
                                 }}
                                 onDelete={() => {
-                                    setConfirmDelete({ personaId: selectedPersona._id, index: contextMenu.index });
+                                    const messageToDelete = messages[contextMenu.index];
+                                    if (messageToDelete) {
+                                        setConfirmDelete({
+                                            personaId: selectedPersona._id,
+                                            messageId: messageToDelete._id 
+                                        });
+                                    }
                                     setContextMenu(null);
                                 }}
                             />
@@ -448,7 +452,7 @@ export default function Chat({ user, onLogout }) {
                         try {
                             const updated = await deleteChatFrom(
                                 confirmDelete.personaId,
-                                confirmDelete.index
+                                confirmDelete.messageId
                             );
                             setMessages(updated);
                             alertify.success("Xóa thành công");
@@ -485,14 +489,6 @@ export default function Chat({ user, onLogout }) {
                             setConfirmDeletePersona(null);
                         }
                     }}
-                />
-            )}
-
-            {confirmLogout && (
-                <ConfirmModal
-                    message={"Bạn có chắc chắn muốn đăng xuất?"}
-                    onCancel={() => setConfirmLogout(false)}
-                    onConfirm={() => onLogout()}
                 />
             )}
 

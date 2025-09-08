@@ -1,6 +1,8 @@
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Auth from "./components/Auth";
 import Chat from "./components/Chat";
+import Profile from "./components/Profile";
 import { jwtDecode } from "jwt-decode";
 
 export default function App() {
@@ -17,8 +19,7 @@ export default function App() {
                 } else {
                     handleLogout();
                 }
-            } catch (err) {
-                console.error("Token không hợp lệ:", err);
+            } catch {
                 handleLogout();
             }
         }
@@ -30,6 +31,19 @@ export default function App() {
         setUser(null);
     }
 
-    if (!user) return <Auth onAuth={setUser} />;
-    return <Chat user={user} onLogout={handleLogout} />;
+    return (
+        <BrowserRouter>
+            <Routes>
+                {!user ? (
+                    <Route path="*" element={<Auth onAuth={setUser} />} />
+                ) : (
+                    <>
+                        <Route path="/chat" element={<Chat user={user} />} />
+                        <Route path="/profile" element={<Profile onLogout={handleLogout} />} />
+                        <Route path="*" element={<Navigate to="/chat" />} />
+                    </>
+                )}
+            </Routes>
+        </BrowserRouter>
+    );
 }

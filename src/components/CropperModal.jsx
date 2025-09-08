@@ -6,10 +6,7 @@ export default function CropperModal({ image, originalFileName, onClose, onSave 
     const [zoom, setZoom] = useState(1);
     const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
     const [closing, setClosing] = useState(false);
-
-    // 👇 state cho kích thước khung crop
     const [cropSize, setCropSize] = useState({ width: 180, height: 320 });
-
     const onCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
         setCroppedAreaPixels(croppedAreaPixels);
     }, []);
@@ -82,14 +79,13 @@ export default function CropperModal({ image, originalFileName, onClose, onSave 
                         crop={crop}
                         zoom={zoom}
                         aspect={9 / 16}
-                        cropSize={cropSize}   // 👈 cho resize
+                        cropSize={cropSize}
                         onCropChange={setCrop}
                         onZoomChange={setZoom}
                         onCropComplete={onCropComplete}
                     />
                 </div>
 
-                {/* Zoom ảnh */}
                 <label>Zoom</label>
                 <input
                     type="range"
@@ -100,7 +96,6 @@ export default function CropperModal({ image, originalFileName, onClose, onSave 
                     onChange={(e) => setZoom(Number(e.target.value))}
                 />
 
-                {/* Resize khung crop */}
                 <br></br>
                 <label>Khung cắt</label>
                 <input
@@ -113,7 +108,7 @@ export default function CropperModal({ image, originalFileName, onClose, onSave 
                         const newWidth = Number(e.target.value);
                         setCropSize({
                             width: newWidth,
-                            height: Math.round(newWidth * 16 / 9), // 👈 giữ đúng tỉ lệ 9:16
+                            height: Math.round(newWidth * 16 / 9),
                         });
                     }}
                 />

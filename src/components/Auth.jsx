@@ -4,12 +4,14 @@ import './Auth.css';
 import alertify from "alertifyjs";
 import "alertifyjs/build/css/alertify.css";
 import "alertifyjs/build/css/themes/default.css";
+import { useNavigate } from "react-router-dom";
 
 export default function Auth({ onAuth }) {
     const [isRegister, setIsRegister] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [name, setName] = useState("");
+    const navigate = useNavigate();
 
     alertify.set('notifier', 'position', 'top-right');
     alertify.set('notifier', 'delay', 3);
@@ -28,6 +30,7 @@ export default function Auth({ onAuth }) {
             const clientVapidKey = import.meta.env.VITE_APP_VAPID_PUBLIC_KEY;
             subscribeUserToPush(clientVapidKey);
             onAuth(data.user);
+            navigate('/chat');
         } catch (err) {
             alertify.error(err.message);
         }

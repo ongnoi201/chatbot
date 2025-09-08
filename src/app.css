@@ -519,35 +519,6 @@ html,
     font-size: 24px;
 }
 
-.loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: transparent;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-}
-
-.spinner {
-    border: 6px solid #f3f3f3;
-    border-top: 6px solid #3498db;
-    border-radius: 50%;
-    width: 48px;
-    height: 48px;
-    animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-
 @media (max-width: 1023px) {
     .sidebar {
         position: fixed;
@@ -599,14 +570,14 @@ html,
     margin-top: 5px;
 }
 
-.remove-btn {
-    background: #ff4d4d !important;
-    color: white;
+.personal-btn {
+    background: transparent !important;
+    color: rgb(0, 0, 0) !important;
     border: none;
     padding: 4px 8px !important;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 16px !important;
 }
 
 .add-time-btn {
