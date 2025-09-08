@@ -108,6 +108,7 @@ export default function Chat({ user, onLogout }) {
             setUnreadPersonas(newUnread);
         }
         setSelectedPersona(p);
+        setMessages([]);  
         setLoading(true);
         try {
             const history = await getChatHistory(p._id);
@@ -247,7 +248,7 @@ export default function Chat({ user, onLogout }) {
     }, []);
 
     const handleRedirect = () => {
-        window.location.href = 'tool.html';
+        window.location.href = '/tool.html';
     };
 
     useEffect(() => {
