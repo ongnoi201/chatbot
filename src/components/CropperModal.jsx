@@ -1,5 +1,14 @@
 import Cropper from "react-easy-crop";
 import { useState, useCallback } from "react";
+import './CropperModal.css';
+
+const aspectRatios = [
+    { value: 9 / 16, label: "9:16" },
+    { value: 16 / 9, label: "16:9" },
+    { value: 3 / 4, label: "3:4" },
+    { value: 4 / 3, label: "4:3" },
+    { value: 1 / 1, label: "1:1" },
+];
 
 export default function CropperModal({ image, originalFileName, onClose, onSave }) {
     const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -7,18 +16,27 @@ export default function CropperModal({ image, originalFileName, onClose, onSave 
     const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
     const [closing, setClosing] = useState(false);
     const [cropSize, setCropSize] = useState({ width: 180, height: 320 });
+    const [aspect, setAspect] = useState(9 / 16);
     const onCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
         setCroppedAreaPixels(croppedAreaPixels);
     }, []);
+
+    const handleAspectChange = (newAspect) => {
+        setAspect(newAspect);
+        setCrop({ x: 0, y: 0 });
+        setZoom(1);
+        setCropSize(prevSize => ({
+            width: prevSize.width,
+            height: Math.round(prevSize.width / newAspect),
+        }));
+    };
 
     async function getCroppedImg(imageSrc, pixelCrop) {
         const image = await createImage(imageSrc);
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
-
         canvas.width = pixelCrop.width;
         canvas.height = pixelCrop.height;
-
         ctx.drawImage(
             image,
             pixelCrop.x,
@@ -30,7 +48,6 @@ export default function CropperModal({ image, originalFileName, onClose, onSave 
             pixelCrop.width,
             pixelCrop.height
         );
-
         return new Promise((resolve) => {
             canvas.toBlob((blob) => {
                 const fileName = originalFileName || "avatar.jpg";
@@ -78,7 +95,7 @@ export default function CropperModal({ image, originalFileName, onClose, onSave 
                         image={image}
                         crop={crop}
                         zoom={zoom}
-                        aspect={9 / 16}
+                        aspect={aspect}
                         cropSize={cropSize}
                         onCropChange={setCrop}
                         onZoomChange={setZoom}
@@ -86,7 +103,21 @@ export default function CropperModal({ image, originalFileName, onClose, onSave 
                     />
                 </div>
 
-                <label>Zoom</label>
+                <div className="aspect-ratio-selector">
+                    <div className="aspect-buttons">
+                        {aspectRatios.map((ratio) => (
+                            <button
+                                key={ratio.label}
+                                className={`aspect-btn ${aspect === ratio.value ? 'active' : ''}`}
+                                onClick={() => handleAspectChange(ratio.value)}
+                            >
+                                {ratio.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                <label>Zoom </label>
                 <input
                     type="range"
                     min={1}
@@ -97,7 +128,7 @@ export default function CropperModal({ image, originalFileName, onClose, onSave 
                 />
 
                 <br></br>
-                <label>Khung cắt</label>
+                <label>Khung cắt </label>
                 <input
                     type="range"
                     min={100}
@@ -108,7 +139,7 @@ export default function CropperModal({ image, originalFileName, onClose, onSave 
                         const newWidth = Number(e.target.value);
                         setCropSize({
                             width: newWidth,
-                            height: Math.round(newWidth * 16 / 9),
+                            height: Math.round(newWidth / aspect),
                         });
                     }}
                 />

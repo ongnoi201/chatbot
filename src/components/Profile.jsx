@@ -12,6 +12,7 @@ import alertify from "alertifyjs";
 import "alertifyjs/build/css/alertify.css";
 import "alertifyjs/build/css/themes/default.css";
 import LoadingSpinner from "./LoadingSpinner";
+import CropperModal from "./CropperModal";
 
 export default function Profile({ onLogout }) {
     const [user, setUser] = useState(null);
@@ -24,6 +25,9 @@ export default function Profile({ onLogout }) {
     const [passwordData, setPasswordData] = useState({ oldPassword: "", newPassword: "" });
     const [confirmLogout, setConfirmLogout] = useState(false);
     const [confirmDeleteUser, setConfirmDeleteUser] = useState(false);
+    const [cropState, setCropState] = useState(null);
+    const [tempImageUrls, setTempImageUrls] = useState({});
+
     alertify.set("notifier", "position", "bottom-center");
     alertify.set("notifier", "delay", 3);
 
@@ -39,17 +43,57 @@ export default function Profile({ onLogout }) {
                     avatar: u.avatar || "",
                     cover: u.cover || "",
                 });
-
                 const s = await getProfileStats();
                 setStats(s);
             } catch (err) {
                 console.error("Lỗi load profile:", err);
+                alertify.error("Không thể tải dữ liệu người dùng.");
             } finally {
                 setLoading(false);
             }
         }
         fetchData();
-    }, []);
+
+        return () => {
+            Object.values(tempImageUrls).forEach(URL.revokeObjectURL);
+        };
+    }, []); // ✅ Xóa dependency `tempImageUrls` để tránh re-fetch không cần thiết
+
+    function handleChange(e) {
+        const { name, value, files } = e.target;
+        if (files && files[0]) {
+            const file = files[0];
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setCropState({
+                    image: reader.result,
+                    field: name,
+                    fileName: file.name,
+                    aspect: name === 'avatar' ? 1 / 1 : 16 / 9,
+                });
+            };
+            reader.readAsDataURL(file);
+            e.target.value = null;
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
+        }
+    }
+
+    const handleCropSave = (croppedData) => {
+        const { file, url } = croppedData;
+        setFormData(prev => ({
+            ...prev,
+            [cropState.field]: file,
+        }));
+        if (tempImageUrls[cropState.field]) {
+            URL.revokeObjectURL(tempImageUrls[cropState.field]);
+        }
+        setTempImageUrls(prevUrls => ({
+            ...prevUrls,
+            [cropState.field]: url,
+        }));
+        setCropState(null);
+    };
 
     function handlePasswordChange(e) {
         const { name, value } = e.target;
@@ -64,20 +108,9 @@ export default function Profile({ onLogout }) {
             setShowPasswordModal(false);
             setPasswordData({ oldPassword: "", newPassword: "" });
         } catch (err) {
-            alertify.error("❌ Cập nhật mật khẩu thất bại");
-            console.log("Lỗi: " + err);
-        }finally {
+            alertify.error(`❌ ${err.message || "Cập nhật mật khẩu thất bại"}`);
+        } finally {
             setLoading(false);
-        }
-    }
-
-
-    function handleChange(e) {
-        const { name, value, files } = e.target;
-        if (files) {
-            setFormData(prev => ({ ...prev, [name]: files[0] }));
-        } else {
-            setFormData(prev => ({ ...prev, [name]: value }));
         }
     }
 
@@ -98,7 +131,7 @@ export default function Profile({ onLogout }) {
         } catch (err) {
             console.error("Update error:", err);
             alertify.error("❌ Không thể cập nhật user");
-        }finally {
+        } finally {
             setLoading(false);
         }
     }
@@ -112,35 +145,55 @@ export default function Profile({ onLogout }) {
         } catch (err) {
             console.error("Delete error:", err);
             alertify.error("❌ Không thể xóa tài khoản");
-        }finally {
-            setLoading(false); 
+        } finally {
+            setLoading(false);
         }
     }
 
-    if (!user) return <p className="loading">Không có dữ liệu user</p>;
+    const getImageUrl = (field, defaultUrl) => {
+        if (formData[field] instanceof File && tempImageUrls[field]) {
+            return tempImageUrls[field];
+        }
+        return formData[field] || defaultUrl;
+    };
+
+    if (!user && !loading) return <p className="loading">Không có dữ liệu user</p>;
 
     return (
         <div className="profile-container">
             {loading && <LoadingSpinner />}
+            {cropState && (
+                <CropperModal
+                    image={cropState.image}
+                    originalFileName={cropState.fileName}
+                    aspect={cropState.aspect}
+                    onClose={() => setCropState(null)}
+                    onSave={handleCropSave}
+                />
+            )}
+
             {/* Cover */}
             <div className="cover-wrapper">
                 {editMode ? (
-                    <input type="file" name="cover" accept="image/*" onChange={handleChange} />
+                    <div className="cover-edit-area">
+                        <label className="file-input-label">
+                            <i className="bi bi-camera"></i> Chọn ảnh bìa
+                            <input type="file" name="cover" accept="image/*" onChange={handleChange} style={{ display: 'none' }} />
+                        </label>
+                        {/* ✅ HIỂN THỊ PREVIEW BÊN DƯỚI INPUT */}
+                        {(tempImageUrls.cover || user.cover) && (
+                             <div className="edit-preview-wrapper">
+                                <img src={tempImageUrls.cover || user.cover} alt="Cover Preview" className="edit-preview-img cover" />
+                             </div>
+                        )}
+                    </div>
                 ) : (
                     <img
-                        src={
-                            formData.cover instanceof File
-                                ? URL.createObjectURL(formData.cover)
-                                : formData.cover || "https://via.placeholder.com/600x200"
-                        }
+                        src={getImageUrl("cover", "https://placehold.co/600x400/EEE/31343C")}
                         alt="cover"
                         className="cover-image"
                         onClick={() =>
-                            setPreviewImage(
-                                formData.cover instanceof File
-                                    ? URL.createObjectURL(formData.cover)
-                                    : formData.cover
-                            )
+                            setPreviewImage(getImageUrl("cover", "https://placehold.co/600x400/EEE/31343C"))
                         }
                     />
                 )}
@@ -148,22 +201,25 @@ export default function Profile({ onLogout }) {
                 {/* Avatar */}
                 <div className="avatar-wrapper">
                     {editMode ? (
-                        <input type="file" name="avatar" accept="image/*" onChange={handleChange} />
+                        <div className="avatar-edit-area">
+                            {/* ✅ HIỂN THỊ PREVIEW BÊN DƯỚI INPUT */}
+                            {(tempImageUrls.avatar || user.avatar) && (
+                                <div className="edit-preview-wrapper avatar">
+                                    <img src={tempImageUrls.avatar || user.avatar} alt="Avatar Preview" className="edit-preview-img avatar" />
+                                </div>
+                            )}
+                             <label className="file-input-label-avatar">
+                                <i className="bi bi-camera"></i> Chọn ảnh đại diện
+                                <input type="file" name="avatar" accept="image/*" onChange={handleChange} style={{ display: 'none' }} />
+                            </label>
+                        </div>
                     ) : (
                         <img
-                            src={
-                                formData.avatar instanceof File
-                                    ? URL.createObjectURL(formData.avatar)
-                                    : formData.avatar || "https://via.placeholder.com/100"
-                            }
+                            src={getImageUrl("avatar", "https://placehold.co/100x100/EEE/31343C")}
                             alt="avatar"
                             className="avatar-image"
                             onClick={() =>
-                                setPreviewImage(
-                                    formData.avatar instanceof File
-                                        ? URL.createObjectURL(formData.avatar)
-                                        : formData.avatar
-                                )
+                                setPreviewImage(getImageUrl("avatar", "https://placehold.co/100x100/EEE/31343C"))
                             }
                         />
                     )}
@@ -171,13 +227,13 @@ export default function Profile({ onLogout }) {
             </div>
 
             <div className="profile-info">
-                {/* Name */}
+                {/* ... Các phần còn lại của component không thay đổi ... */}
                 <h2 className="profile-name">
                     {editMode ? (
                         <input
                             type="text"
                             name="name"
-                            value={formData.name}
+                            value={formData.name || ''}
                             onChange={handleChange}
                             className="input-field"
                         />
@@ -185,14 +241,12 @@ export default function Profile({ onLogout }) {
                         formData.name
                     )}
                 </h2>
-
-                {/* Email */}
                 <p className="profile-email">
                     {editMode ? (
                         <input
                             type="email"
                             name="email"
-                            value={formData.email}
+                            value={formData.email || ''}
                             onChange={handleChange}
                             className="input-field"
                         />
@@ -200,8 +254,6 @@ export default function Profile({ onLogout }) {
                         formData.email
                     )}
                 </p>
-
-                {/* Stats */}
                 {stats ? (
                     <>
                         <div className="stats-grid">
@@ -214,7 +266,6 @@ export default function Profile({ onLogout }) {
                                 <p className="stat-label">Messages</p>
                             </div>
                         </div>
-
                         <div className="persona-messages">
                             <h3 className="section-title">Số lượng tin nhắn của từng nhân vật</h3>
                             <ul>
@@ -230,20 +281,18 @@ export default function Profile({ onLogout }) {
                 ) : (
                     <p className="error-text">Không lấy được dữ liệu thống kê</p>
                 )}
-
-                {/* Actions */}
                 <div className="action-buttons">
                     {editMode ? (
                         <>
-                            <button onClick={handleSave} className="btn btn-green">Save</button>
-                            <button onClick={() => setShowPasswordModal(true)} className="btn btn-orange">Change password</button>
-                            <button onClick={() => setEditMode(false)} className="btn btn-gray">Cancel</button>
+                            <button onClick={handleSave} className="btn btn-green">Lưu</button>
+                            <button onClick={() => setShowPasswordModal(true)} className="btn btn-orange">Đổi mật khẩu</button>
+                            <button onClick={() => setEditMode(false)} className="btn btn-gray">Hủy</button>
                         </>
                     ) : (
                         <>
-                            <button onClick={() => setEditMode(true)} className="btn btn-blue">Edit</button>
-                            <button onClick={()=>setConfirmDeleteUser(true)} className="btn btn-red">Delete</button>
-                            <button onClick={()=>setConfirmLogout(true)} className="btn btn-dark">Logout</button>
+                            <button onClick={() => setEditMode(true)} className="btn btn-blue">Chỉnh sửa</button>
+                            <button onClick={() => setConfirmDeleteUser(true)} className="btn btn-red">Xóa tài khoản</button>
+                            <button onClick={() => setConfirmLogout(true)} className="btn btn-dark">Đăng xuất</button>
                         </>
                     )}
                 </div>
@@ -253,19 +302,16 @@ export default function Profile({ onLogout }) {
                 <ConfirmModal
                     message={"Bạn có chắc chắn muốn đăng xuất?"}
                     onCancel={() => setConfirmLogout(false)}
-                    onConfirm={() => onLogout()}
+                    onConfirm={onLogout}
                 />
             )}
-
             {confirmDeleteUser && (
                 <ConfirmModal
-                    message={"Bạn có chắc chắn muốn xóa tài khoản?"}
+                    message={"Bạn có chắc chắn muốn xóa tài khoản và toàn bộ dữ liệu?"}
                     onCancel={() => setConfirmDeleteUser(false)}
-                    onConfirm={() => handleDelete()}
+                    onConfirm={handleDelete}
                 />
             )}
-
-            {/* Modal đổi mật khẩu */}
             {showPasswordModal && (
                 <div className="modal-overlay" onClick={() => setShowPasswordModal(false)}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -278,7 +324,6 @@ export default function Profile({ onLogout }) {
                             placeholder="Mật khẩu cũ"
                             className="input-field input-pass-old"
                         />
-
                         <input
                             type="password"
                             name="newPassword"
@@ -288,28 +333,15 @@ export default function Profile({ onLogout }) {
                             className="input-field"
                         />
                         <div className="modal-actions">
-                            <button onClick={handleChangePassword} className="btn btn-green">
-                                Lưu
-                            </button>
-                            <button onClick={() => setShowPasswordModal(false)} className="btn btn-gray">
-                                Hủy
-                            </button>
+                            <button onClick={handleChangePassword} className="btn btn-green">Lưu</button>
+                            <button onClick={() => setShowPasswordModal(false)} className="btn btn-gray">Hủy</button>
                         </div>
                     </div>
                 </div>
             )}
-
-            {/* Modal xem ảnh lớn */}
             {previewImage && (
-                <div
-                    className="image-modal-overlay"
-                    onClick={() => setPreviewImage(null)}
-                >
-                    <img
-                        src={previewImage}
-                        alt="preview"
-                        className="image-modal-content"
-                    />
+                <div className="image-modal-overlay" onClick={() => setPreviewImage(null)}>
+                    <img src={previewImage} alt="preview" className="image-modal-content" />
                 </div>
             )}
         </div>

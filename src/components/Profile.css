@@ -18,6 +18,9 @@
     bottom: -50px;
     left: 50%;
     transform: translateX(-50%);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
 }
 
 .avatar-image {
@@ -31,6 +34,14 @@
 
 .profile-info {
     margin-top: 50px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 20px;
+}
+
+.profile-info.edit {
+    margin-top: 280px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -59,7 +70,7 @@
     outline: none;
 }
 
-.input-pass-old{
+.input-pass-old {
     margin-bottom: 8px;
 }
 
@@ -142,7 +153,7 @@
     background: #374151;
 }
 
-.btn-orange{
+.btn-orange {
     background: orange;
 }
 
@@ -205,4 +216,42 @@
     justify-content: flex-end;
     gap: 10px;
     margin-top: 15px;
+}
+
+.cover-edit-area,
+.avatar-edit-area {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.edit-preview-wrapper {
+    text-align: center;
+    color: #555;
+    font-size: 0.9em;
+}
+
+.edit-preview-wrapper p {
+    margin-bottom: 5px;
+}
+
+.edit-preview-img.cover {
+    width: 250px;
+    height: 140px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px dashed #ccc;
+}
+
+.edit-preview-img.avatar {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px dashed #ccc;
+}
+
+.avatar-edit-area .file-input-label-avatar {
+    position: relative;
 }
