@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { login, register, subscribeUserToPush } from "../api";
+import { login, register, subscribeUserToPush } from "../../api";
 import './Auth.css';
 import alertify from "alertifyjs";
 import "alertifyjs/build/css/alertify.css";
@@ -13,7 +13,7 @@ export default function Auth({ onAuth }) {
     const [name, setName] = useState("");
     const navigate = useNavigate();
 
-    alertify.set('notifier', 'position', 'top-right');
+    alertify.set('notifier', 'position', 'bottom-center');
     alertify.set('notifier', 'delay', 3);
 
     async function handleSubmit(e) {
@@ -22,15 +22,17 @@ export default function Auth({ onAuth }) {
             let data;
             if (isRegister) {
                 data = await register({ email, password, name });
+                setIsRegister(false);
             } else {
                 data = await login({ email, password });
+                alertify.success("✅Đăng nhập thành công!")
+                localStorage.setItem("token", data.token);
+                localStorage.setItem("user", JSON.stringify(data.user));
+                const clientVapidKey = import.meta.env.VITE_APP_VAPID_PUBLIC_KEY;
+                subscribeUserToPush(clientVapidKey);
+                onAuth(data.user);
+                navigate('/chat');
             }
-            localStorage.setItem("token", data.token);
-            localStorage.setItem("user", JSON.stringify(data.user));
-            const clientVapidKey = import.meta.env.VITE_APP_VAPID_PUBLIC_KEY;
-            subscribeUserToPush(clientVapidKey);
-            onAuth(data.user);
-            navigate('/chat');
         } catch (err) {
             alertify.error(err.message);
         }

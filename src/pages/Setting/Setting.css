@@ -1,0 +1,47 @@
+.settings-container{
+    padding: 20px;
+}
+
+.resetSetting{
+    width: 100%;
+    padding: 10px 0;
+    margin-top: 30px;
+    border-radius: 9px;
+    outline: none;
+    border: none;
+    background-color: #ce9c51;
+    font-size: 18px;
+}
+
+.settings-container h2{
+    text-align: center;
+}
+
+.setting-item {
+  margin: 16px 0;
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.setting-item select {
+    padding: 5px 8px;
+    border-radius: 5px;
+}
+
+.color-preview {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+
+.color-picker-popup {
+  position: absolute;
+  top: 40px;
+  right: 0;
+  z-index: 100;
+  margin-top: 8px;
+}

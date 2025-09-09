@@ -1,5 +1,12 @@
-const API_URL = import.meta.env.VITE_API_BASE || "http://localhost:5050";
+import alertify from "alertifyjs";
+import "alertifyjs/build/css/alertify.css";
+import "alertifyjs/build/css/themes/default.css";
 
+const API_URL = import.meta.env.VITE_API_BASE || "http://localhost:5050";
+alertify.set('notifier', 'position', 'bottom-center');
+alertify.set('notifier', 'delay', 3);
+
+/* ============== HÀM FETCH DÙNG CHUNG ==================================== */
 async function apiFetch(url, options = {}) {
     const token = localStorage.getItem("token");
     const headers = {
@@ -17,7 +24,6 @@ async function apiFetch(url, options = {}) {
     if (res.status === 401) {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-        // Ném lỗi để component có thể bắt và xử lý
         throw new Error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
     }
 
@@ -155,7 +161,7 @@ export async function deletePersona(id) {
 }
 
 export async function getLastMessages() {
-    const res = await apiFetch(`${API_URL}/api/personas/last-messages`);
+    const res = await apiFetch(`${API_URL}/api/chat/last-messages`);
     if (!res.ok) throw new Error("Không lấy được tin nhắn cuối cùng");
     return res.json();
 }
@@ -199,7 +205,6 @@ export async function clearChatHistory(personaId) {
     return res.json();
 }
 
-// Giữ nguyên hàm streamChat vì logic xử lý body của nó khác biệt
 export async function streamChat(personaId, payload, onDelta, onDone, onError) {
     const token = localStorage.getItem("token");
     const res = await fetch(`${API_URL}/api/chat/stream/${personaId}`, {
@@ -211,7 +216,6 @@ export async function streamChat(personaId, payload, onDelta, onDone, onError) {
         body: JSON.stringify(payload),
     });
     
-    // Xử lý 401 thủ công cho riêng hàm này
     if (res.status === 401) {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
@@ -254,17 +258,16 @@ export async function streamChat(personaId, payload, onDelta, onDone, onError) {
     }
 }
 
-// ==================== PUSH API ====================
-
+// ==================== WEBPUSH API ====================
 export async function subscribeUserToPush(vapidPublicKey) {
     if (!("serviceWorker" in navigator)) {
-        alert("Trình duyệt không hỗ trợ Push Notification");
+        alertify.error("❌Trình duyệt không hỗ trợ");
         return;
     }
 
     const permission = await Notification.requestPermission();
     if (permission !== "granted") {
-        alert("Bạn cần cho phép thông báo để nhận tin nhắn");
+        alertify.error("❌Bạn cần cho phép thông báo để nhận tin nhắn");
         return;
     }
 

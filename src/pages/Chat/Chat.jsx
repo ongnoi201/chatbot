@@ -1,11 +1,9 @@
-import "../app.css";
+import "./Chat.css";
 import alertify from "alertifyjs";
-import ContextMenu from "./ContextMenu";
-import ConfirmModal from "./ConfirmModal";
 import "alertifyjs/build/css/alertify.css";
 import "alertifyjs/build/css/themes/default.css";
-import PersonaFormModal from "./PersonaFormModal";
 import { useEffect, useRef, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import {
     getPersonas,
     createPersona,
@@ -16,10 +14,12 @@ import {
     deletePersona,
     clearChatHistory,
     getLastMessages
-} from "../api";
-import TypingIndicator from "./TypingIndicator";
-import { useNavigate } from "react-router-dom";
-import LoadingSpinner from "./LoadingSpinner";
+} from "../../api";
+import ContextMenu from "../../components/ContextMenu/ContextMenu";
+import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
+import TypingIndicator from "../../components/TypingIndicator/TypingIndicator";
+import LoadingSpinner from "../../components/LoadingSpinner/LoadingSpinner";
+import PersonaFormModal from "../../components/PersonaFormModal/PersonaFormModal"
 
 export default function Chat({ user }) {
     const bottomRef = useRef(null);
@@ -66,6 +66,7 @@ export default function Chat({ user }) {
             setUnreadPersonas(newUnread);
         } catch (error) {
             console.error("Lỗi kiểm tra tin nhắn chưa đọc:", error);
+            alertify.error("Lỗi kiểm tra tin nhắn chưa đọc");
         }
     }, [selectedPersona]);
 
@@ -94,6 +95,7 @@ export default function Chat({ user }) {
             setPersonas(merged);
         } catch (err) {
             console.error("Lỗi khi load personas", err);
+            alertify.error("❌Lỗi khi tải nhân vật")
         } finally {
             setLoading(false);
         }
@@ -189,10 +191,10 @@ export default function Chat({ user }) {
         try {
             await clearChatHistory(personaId);
             setMessages([]);
-            alertify.success("Đã xóa toàn bộ lịch sử");
+            alertify.success("✅Đã xóa toàn bộ lịch sử");
         } catch (err) {
             console.error("Xóa lịch sử lỗi", err);
-            alertify.error("Xóa thất bại");
+            alertify.error("❌Lỗi khi xóa lịch sử");
         } finally {
             setLoading(false);
             setConfirmHistory(null);
@@ -216,13 +218,13 @@ export default function Chat({ user }) {
 
             setMessages((prev) => [...more, ...prev]);
 
-            // đợi React render xong
             setTimeout(() => {
                 const newHeight = container.scrollHeight;
                 container.scrollTop = newHeight - prevHeight;
             }, 0);
         } catch (err) {
             console.error("Không load thêm được tin cũ", err);
+            alertify.error("❌Lỗi load tin nhắn cũ");
         } finally {
             setLoading(false);
         }
@@ -295,7 +297,12 @@ export default function Chat({ user }) {
                 >
                     <div className="sidebar-top">
                         <center><h2>Nhân <span onClick={handleRedirect}>vật</span></h2></center>
-                        <button className="add-persona" onClick={() => setFormMode("create")}>Tạo Nhân Vật Mới</button>
+                        <button className="add-persona" onClick={() => {
+                            setFormMode("create");
+                            setShowSidebar(false);
+                        }}>
+                                Tạo Nhân Vật Mới
+                        </button>
                         <div className="persona-list">
                             {personas.map((p) => (
                                 <div
@@ -314,7 +321,7 @@ export default function Chat({ user }) {
                         </div>
                     </div>
                     <div className="sidebar-bottom">
-                        <button className="personal-btn" onClick={() => navigate('/profile')}>
+                        <button className="profile-btn" onClick={() => navigate('/profile')}>
                             <i className="bi bi-box-arrow-right"></i> {user.name}
                         </button>
                     </div>
@@ -445,7 +452,7 @@ export default function Chat({ user }) {
 
             {confirmDelete && (
                 <ConfirmModal
-                    message="Bạn có chắc muốn xóa từ đoạn chat này trở về sau?"
+                    message="⚠️Bạn có chắc muốn xóa từ đoạn chat này trở về sau?"
                     onCancel={() => setConfirmDelete(null)}
                     onConfirm={async () => {
                         setLoading(true);
@@ -455,10 +462,10 @@ export default function Chat({ user }) {
                                 confirmDelete.messageId
                             );
                             setMessages(updated);
-                            alertify.success("Xóa thành công");
+                            alertify.success("✅Đã xóa các tin nhắn");
                         } catch (err) {
                             console.error("Xóa chat lỗi", err);
-                            alertify.error("Xóa thất bại");
+                            alertify.error("❌Lỗi khi xóa tin nhắn");
                         } finally {
                             setLoading(false);
                             setConfirmDelete(null);
@@ -469,7 +476,7 @@ export default function Chat({ user }) {
 
             {confirmDeletePersona && (
                 <ConfirmModal
-                    message={`Bạn có chắc muốn xóa nhân vật "${confirmDeletePersona.name}" và toàn bộ lịch sử chat không?`}
+                    message={`⚠️Bạn có chắc muốn xóa nhân vật "${confirmDeletePersona.name}" và toàn bộ lịch sử chat không?`}
                     onCancel={() => setConfirmDeletePersona(null)}
                     onConfirm={async () => {
                         setLoading(true);
@@ -480,10 +487,10 @@ export default function Chat({ user }) {
                             );
                             setSelectedPersona(null);
                             setMessages([]);
-                            alertify.success("Xóa thành công");
+                            alertify.success("✅Xóa nhân vật thành công");
                         } catch (err) {
                             console.error("Xóa persona lỗi", err);
-                            alertify.error("Xóa thất bại");
+                            alertify.error("❌Lỗi khi xóa nhân vật");
                         } finally {
                             setLoading(false);
                             setConfirmDeletePersona(null);
@@ -494,7 +501,7 @@ export default function Chat({ user }) {
 
             {confirmHistory && (
                 <ConfirmModal
-                    message={"Bạn có chắc chắn muốn xóa toàn bộ lịch sử cuộc trò chuyện không?"}
+                    message={"⚠️Bạn có chắc chắn muốn xóa toàn bộ lịch sử cuộc trò chuyện không?"}
                     onCancel={() => setConfirmHistory(false)}
                     onConfirm={() => onDeleteHistory(selectedPersona._id)}
                 />
@@ -515,7 +522,6 @@ export default function Chat({ user }) {
                                     rules: [],
                                 });
 
-                                // ✅ giữ background trong state
                                 const personaWithBg = { ...created, background: data.background };
 
                                 setPersonas((prev) => [...prev, personaWithBg]);
@@ -526,7 +532,6 @@ export default function Chat({ user }) {
                                     data
                                 );
 
-                                // ✅ giữ background trong state
                                 const personaWithBg = { ...updated, background: data.background };
 
                                 setPersonas((prev) =>
@@ -539,8 +544,8 @@ export default function Chat({ user }) {
                         } catch (err) {
                             alertify.error(
                                 formMode === "create"
-                                    ? "Tạo nhân vật thất bại"
-                                    : "Cập nhật nhân vật thất bại"
+                                    ? "❌Tạo nhân vật thất bại"
+                                    : "❌Cập nhật nhân vật thất bại"
                             );
                         } finally {
                             setLoading(false);

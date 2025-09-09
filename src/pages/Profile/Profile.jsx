@@ -5,14 +5,15 @@ import {
     updateProfile,
     deleteProfile,
     changePassword,
-} from "../api";
+} from "../../api";
 import "./Profile.css";
-import ConfirmModal from "./ConfirmModal";
+import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
 import alertify from "alertifyjs";
 import "alertifyjs/build/css/alertify.css";
 import "alertifyjs/build/css/themes/default.css";
-import LoadingSpinner from "./LoadingSpinner";
-import CropperModal from "./CropperModal";
+import LoadingSpinner from "../../components/LoadingSpinner/LoadingSpinner";
+import CropperModal from "../../components/CropperModal/CropperModal";
+import { useNavigate } from "react-router-dom";
 
 export default function Profile({ onLogout }) {
     const [user, setUser] = useState(null);
@@ -27,6 +28,7 @@ export default function Profile({ onLogout }) {
     const [confirmDeleteUser, setConfirmDeleteUser] = useState(false);
     const [cropState, setCropState] = useState(null);
     const [tempImageUrls, setTempImageUrls] = useState({});
+    const navigate = useNavigate();
 
     alertify.set("notifier", "position", "bottom-center");
     alertify.set("notifier", "delay", 3);
@@ -47,7 +49,7 @@ export default function Profile({ onLogout }) {
                 setStats(s);
             } catch (err) {
                 console.error("Lỗi load profile:", err);
-                alertify.error("Không thể tải dữ liệu người dùng.");
+                alertify.error("❌Không thể tải dữ liệu người dùng.");
             } finally {
                 setLoading(false);
             }
@@ -104,11 +106,11 @@ export default function Profile({ onLogout }) {
         setLoading(true);
         try {
             await changePassword(passwordData.oldPassword, passwordData.newPassword);
-            alertify.success("✅ Đổi mật khẩu thành công!");
+            alertify.success("✅Đổi mật khẩu thành công!");
             setShowPasswordModal(false);
             setPasswordData({ oldPassword: "", newPassword: "" });
         } catch (err) {
-            alertify.error(`❌ ${err.message || "Cập nhật mật khẩu thất bại"}`);
+            alertify.error(`❌ ${err.message || "❌Cập nhật mật khẩu thất bại"}`);
         } finally {
             setLoading(false);
         }
@@ -127,10 +129,10 @@ export default function Profile({ onLogout }) {
                 cover: updated.cover,
             });
             setEditMode(false);
-            alertify.success("✅ Cập nhật thành công!");
+            alertify.success("✅Cập nhật thành công!");
         } catch (err) {
             console.error("Update error:", err);
-            alertify.error("❌ Không thể cập nhật user");
+            alertify.error("❌Lỗi khi cập nhật user");
         } finally {
             setLoading(false);
         }
@@ -140,11 +142,11 @@ export default function Profile({ onLogout }) {
         setLoading(true);
         try {
             await deleteProfile();
-            alertify.success("✅ Tài khoản đã bị xóa");
+            alertify.success("✅Tài khoản đã bị xóa");
             onLogout();
         } catch (err) {
             console.error("Delete error:", err);
-            alertify.error("❌ Không thể xóa tài khoản");
+            alertify.error("❌Lỗi xóa tài khoản");
         } finally {
             setLoading(false);
         }
@@ -254,6 +256,7 @@ export default function Profile({ onLogout }) {
                         formData.email
                     )}
                 </p>
+                <button className="goto-setting-page" onClick={()=>navigate('/setting')}>Cài Đặt</button>
                 {stats ? (
                     <>
                         <div className="stats-grid">
@@ -300,14 +303,14 @@ export default function Profile({ onLogout }) {
 
             {confirmLogout && (
                 <ConfirmModal
-                    message={"Bạn có chắc chắn muốn đăng xuất?"}
+                    message={"⚠️Bạn có chắc chắn muốn đăng xuất?"}
                     onCancel={() => setConfirmLogout(false)}
                     onConfirm={onLogout}
                 />
             )}
             {confirmDeleteUser && (
                 <ConfirmModal
-                    message={"Bạn có chắc chắn muốn xóa tài khoản và toàn bộ dữ liệu?"}
+                    message={"⚠️Bạn có chắc chắn muốn xóa tài khoản và toàn bộ dữ liệu?"}
                     onCancel={() => setConfirmDeleteUser(false)}
                     onConfirm={handleDelete}
                 />

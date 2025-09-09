@@ -1,0 +1,106 @@
+/* ================= MODAL ================= */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal {
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: 12px;
+    width: 400px;
+    max-width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    animation-duration: 0.5s;
+}
+
+.modal h3 {
+    margin-top: 65px;
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+}
+
+.modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.modal-form button {
+    padding: 8px 0;
+    background-color: #27ae60;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.modal-form input,
+.modal-form textarea,
+.modal-form select {
+    padding: 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 0.95rem;
+}
+
+.actions-btn {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1px;
+    margin-top: 1rem;
+    z-index: 99999;
+}
+
+.actions-btn button {
+    width: 80px;
+    height: 60px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+/* ============== THỜI GIAN AUTOMESSAGE ================== */
+.time-section {
+    margin-top: 12px;
+}
+
+.time-item {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.time-item input[type="time"] {
+    padding: 4px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    margin-top: 5px;
+}
+
+.add-time-btn {
+    margin-top: 6px;
+    padding: 6px 10px !important;
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.remove-btn{
+    padding: 2px 5px !important;
+    margin-top: 5px !important;
+}

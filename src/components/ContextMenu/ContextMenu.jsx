@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from "react";
+import './ContextMenu.css';
 export default function ContextMenu({ x, y, onClose, onCopy, onDelete }) {
     const menuRef = useRef(null);
     const [position, setPosition] = useState({ left: x, top: y });

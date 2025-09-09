@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import "../app.css";
-import CropperModal from "./CropperModal";
+import "./PersonaFormModal.css";
+import CropperModal from "../CropperModal/CropperModal";
 
 export default function PersonaFormModal({
     initialData,

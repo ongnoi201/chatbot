@@ -256,3 +256,12 @@
 .avatar-edit-area .file-input-label-avatar {
     position: relative;
 }
+
+.goto-setting-page{
+    padding: 8px 0;
+    border-radius: 6px;
+    outline: none;
+    border: none;
+    background-color: #8aa5df;
+    font-size: 16px;
+}
