@@ -166,6 +166,7 @@
 .error-text {
     margin-top: 1rem;
     color: red;
+    text-align: center;
 }
 
 .image-modal-overlay {

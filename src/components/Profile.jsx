@@ -285,14 +285,14 @@ export default function Profile({ onLogout }) {
                     {editMode ? (
                         <>
                             <button onClick={handleSave} className="btn btn-green">Lưu</button>
-                            <button onClick={() => setShowPasswordModal(true)} className="btn btn-orange">Đổi mật khẩu</button>
+                            <button onClick={() => setShowPasswordModal(true)} className="btn btn-orange">Password</button>
                             <button onClick={() => setEditMode(false)} className="btn btn-gray">Hủy</button>
                         </>
                     ) : (
                         <>
-                            <button onClick={() => setEditMode(true)} className="btn btn-blue">Chỉnh sửa</button>
-                            <button onClick={() => setConfirmDeleteUser(true)} className="btn btn-red">Xóa tài khoản</button>
-                            <button onClick={() => setConfirmLogout(true)} className="btn btn-dark">Đăng xuất</button>
+                            <button onClick={() => setEditMode(true)} className="btn btn-blue">Edit</button>
+                            <button onClick={() => setConfirmDeleteUser(true)} className="btn btn-red">Delete</button>
+                            <button onClick={() => setConfirmLogout(true)} className="btn btn-dark">Logout</button>
                         </>
                     )}
                 </div>
