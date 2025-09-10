@@ -56,9 +56,9 @@ export default function Setting() {
                     setOpen(false);
                 }
             };
-            document.addEventListener("mousedown", handleClickOutside);
+            document.addEventListener("click", handleClickOutside);
             return () =>
-                document.removeEventListener("mousedown", handleClickOutside);
+                document.removeEventListener("click", handleClickOutside);
         }, []);
 
         return (
