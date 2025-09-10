@@ -406,6 +406,7 @@ export default function Chat({ user }) {
                         <div className="composer">
                             <div className="composer-input">
                                 <textarea
+                                    id="chatInput"
                                     rows={1}
                                     placeholder="Nhập tin nhắn..."
                                     value={input}
