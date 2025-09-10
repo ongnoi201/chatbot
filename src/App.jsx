@@ -43,7 +43,6 @@ export default function App() {
                         <Route path="/chat" element={<Chat user={user} />} />
                         <Route path="/profile" element={<Profile onLogout={handleLogout} />} />
                         <Route path="/setting" element={<Setting />} />
-                        <Route path="*" element={<Navigate to="/chat" />} />
                     </>
                 )}
             </Routes>
