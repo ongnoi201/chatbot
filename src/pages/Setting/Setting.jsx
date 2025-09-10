@@ -28,7 +28,6 @@ export default function Setting() {
         localStorage.setItem("chatSettings", JSON.stringify(settings));
         document.documentElement.setAttribute("data-theme", settings.theme);
         document.body.style.fontFamily = `"${settings.font}", sans-serif`;
-        document.getElementById("chatInput").style.fontFamily = `"${settings.font}", sans-serif`;
 
         document.documentElement.style.setProperty("--menu-color", toRgbaString(settings.menuColor));
         document.documentElement.style.setProperty("--header-icon-color", toRgbaString(settings.headerIconColor));
