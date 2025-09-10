@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { RgbaColorPicker } from "react-colorful";
 import "./Setting.css";
+import alertify from "alertifyjs";
+import "alertifyjs/build/css/alertify.css";
+import "alertifyjs/build/css/themes/default.css";
 
-// Hàm chuyển object RGBA -> string
 const toRgbaString = (rgba) =>
     `rgba(${rgba.r}, ${rgba.g}, ${rgba.b}, ${rgba.a})`;
 
@@ -19,6 +21,9 @@ export default function Setting() {
         font: "Noto Sans",
     };
 
+    alertify.set("notifier", "position", "bottom-center");
+    alertify.set("notifier", "delay", 3);
+
     const [settings, setSettings] = useState(() => {
         const saved = localStorage.getItem("chatSettings");
         return saved ? JSON.parse(saved) : defaultSettings;
@@ -29,13 +34,34 @@ export default function Setting() {
         document.documentElement.setAttribute("data-theme", settings.theme);
         document.body.style.fontFamily = `"${settings.font}", sans-serif`;
 
-        document.documentElement.style.setProperty("--menu-color", toRgbaString(settings.menuColor));
-        document.documentElement.style.setProperty("--header-icon-color", toRgbaString(settings.headerIconColor));
-        document.documentElement.style.setProperty("--ai-msg-bg", toRgbaString(settings.aiMessageBg));
-        document.documentElement.style.setProperty("--ai-msg-text", toRgbaString(settings.aiMessageText));
-        document.documentElement.style.setProperty("--user-msg-bg", toRgbaString(settings.userMessageBg));
-        document.documentElement.style.setProperty("--user-msg-text", toRgbaString(settings.userMessageText));
-        document.documentElement.style.setProperty("--input-box-color", toRgbaString(settings.inputBoxColor));
+        document.documentElement.style.setProperty(
+            "--menu-color",
+            toRgbaString(settings.menuColor)
+        );
+        document.documentElement.style.setProperty(
+            "--header-icon-color",
+            toRgbaString(settings.headerIconColor)
+        );
+        document.documentElement.style.setProperty(
+            "--ai-msg-bg",
+            toRgbaString(settings.aiMessageBg)
+        );
+        document.documentElement.style.setProperty(
+            "--ai-msg-text",
+            toRgbaString(settings.aiMessageText)
+        );
+        document.documentElement.style.setProperty(
+            "--user-msg-bg",
+            toRgbaString(settings.userMessageBg)
+        );
+        document.documentElement.style.setProperty(
+            "--user-msg-text",
+            toRgbaString(settings.userMessageText)
+        );
+        document.documentElement.style.setProperty(
+            "--input-box-color",
+            toRgbaString(settings.inputBoxColor)
+        );
     }, [settings]);
 
     const handleColorChange = (name, value) => {
@@ -45,35 +71,37 @@ export default function Setting() {
     // Component chọn màu
     const ColorField = ({ label, name }) => {
         const [open, setOpen] = useState(false);
+        const popupRef = useRef(null);
+        const previewRef = useRef(null);
 
-        // Đóng popup khi click bên ngoài
         useEffect(() => {
             const handleClickOutside = (e) => {
                 if (
-                    !e.target.closest(".color-picker-popup") &&
-                    !e.target.closest(".color-preview")
+                    popupRef.current &&
+                    !popupRef.current.contains(e.target) &&
+                    previewRef.current &&
+                    !previewRef.current.contains(e.target)
                 ) {
                     setOpen(false);
                 }
             };
-            document.addEventListener("click", handleClickOutside);
-            return () =>
-                document.removeEventListener("click", handleClickOutside);
+            document.addEventListener("mousedown", handleClickOutside);
+            return () => {
+                document.removeEventListener("mousedown", handleClickOutside);
+            };
         }, []);
 
         return (
             <div className="setting-item">
                 <label>{label}</label>
                 <div
+                    ref={previewRef}
                     className="color-preview"
                     style={{ background: toRgbaString(settings[name]) }}
                     onClick={() => setOpen((o) => !o)}
                 />
                 {open && (
-                    <div
-                        className="color-picker-popup"
-                        onClick={(e) => e.stopPropagation()}
-                    >
+                    <div ref={popupRef} className="color-picker-popup">
                         <RgbaColorPicker
                             color={settings[name]}
                             onChange={(c) => handleColorChange(name, c)}
@@ -132,7 +160,17 @@ export default function Setting() {
                     <option value="Georgia">Georgia</option>
                 </select>
             </div>
-            <button className="resetSetting" onClick={()=>localStorage.removeItem("chatSettings")}>Đặt lại mặc định</button>
+
+            <button
+                className="resetSetting"
+                onClick={() => {
+                    localStorage.removeItem("chatSettings");
+                    setSettings(defaultSettings);
+                    alertify.success("✅Đã xóa toàn bộ lịch sử");
+                }}
+            >
+                Đặt lại mặc định
+            </button>
         </div>
     );
 }
