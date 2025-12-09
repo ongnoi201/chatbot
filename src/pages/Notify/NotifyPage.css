@@ -1,0 +1,82 @@
+/* Container chung */
+.notify-page-container {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: transparent;
+}
+
+.page-title {
+    text-align: center;
+    color: #333;
+    margin-bottom: 60px;
+}
+
+/* Thanh điều khiển (Tab và Xóa) */
+.notify-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+/* Các nút Tab */
+.tab-buttons {
+    display: flex;
+}
+
+.tab-btn {
+    padding: 10px 15px;
+    border: 1px solid #ccc;
+    background-color: #f0f0f0;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+/* Nút Success (Trái) */
+.tab-btn:first-child {
+    border-radius: 5px 0 0 5px;
+}
+
+/* Nút Failure (Phải) */
+.tab-btn:last-child {
+    border-radius: 0 5px 5px 0;
+    margin-left: -1px; /* Đẩy sát hai nút vào nhau */
+}
+
+/* Tab đang hoạt động */
+.tab-btn.active {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+/* Nút Xóa tất cả */
+.clear-all-btn {
+    padding: 8px 12px;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background-color 0.2s;
+}
+
+.clear-all-btn:hover {
+    background-color: #c82333;
+}
+
+/* Tin nhắn trống */
+.empty-message {
+    text-align: center;
+    color: #777;
+    padding: 20px;
+    border: 1px dashed #ccc;
+    border-radius: 5px;
+    margin-top: 10px;
+}

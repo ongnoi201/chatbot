@@ -91,9 +91,16 @@
     background: #c0392b;
 }
 
+.button-top{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 5px;
+}
+
 .sidebar-top .add-persona {
     padding: 0.6rem;
-    background: #2ecc71;
+    background: #167029;
     border: none;
     border-radius: 8px;
     color: white;
@@ -103,6 +110,20 @@
 
 .sidebar-top .add-persona:hover {
     background: #27ae60;
+}
+
+.sidebar-top .notify {
+    padding: 0.6rem;
+    background: #243f8a;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.sidebar-top .notify:hover {
+    background: #1c427a;
 }
 
 

@@ -6,6 +6,7 @@ import Chat from "./pages/Chat/Chat";
 import Profile from "./pages/Profile/Profile";
 import './app.css';
 import Setting from "./pages/Setting/Setting";
+import NotifyPage from "./pages/Notify/NotifyPage";
 
 export default function App() {
     const [user, setUser] = useState(null);
@@ -43,6 +44,7 @@ export default function App() {
                         <Route path="/chat" element={<Chat user={user} />} />
                         <Route path="/profile" element={<Profile onLogout={handleLogout} />} />
                         <Route path="/setting" element={<Setting />} />
+                        <Route path="/notify" element={<NotifyPage />} />
                         <Route path="*" element={<Chat user={user}/>} />
                     </>
                 )}

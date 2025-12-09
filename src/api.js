@@ -215,7 +215,7 @@ export async function streamChat(personaId, payload, onDelta, onDone, onError) {
         },
         body: JSON.stringify(payload),
     });
-    
+
     if (res.status === 401) {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
@@ -257,6 +257,55 @@ export async function streamChat(personaId, payload, onDelta, onDone, onError) {
         onError?.(err.message);
     }
 }
+
+
+// ==================== NOTIFY API ====================
+export async function getNotifications() {
+    const res = await apiFetch(`${API_URL}/api/notify/get`);
+
+    if (res.status === 404) {
+        return { success: true, count: 0, data: [] };
+    }
+
+    if (!res.ok) throw new Error("Không lấy được danh sách thông báo");
+
+    return res.json();
+}
+
+export async function deleteNotificationsByStatus(status) {
+    if (!status) {
+        throw new Error("Trạng thái thông báo cần xóa là bắt buộc.");
+    }
+    const res = await apiFetch(`${API_URL}/api/notify/${status}`, {
+        method: "DELETE",
+    });
+
+    if (res.status === 404) {
+        const data = await res.json().catch(() => ({}));
+        alertify.warning(data.message || `Không tìm thấy thông báo trạng thái '${status}' để xóa.`);
+        return { deletedCount: 0 };
+    }
+    
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || `Xóa thông báo trạng thái '${status}' thất bại`);
+    }
+    
+    const data = await res.json();
+    alertify.success(data.message);
+    return data;
+}
+
+export async function countTotalNotifications() {
+    const res = await apiFetch(`${API_URL}/api/notify/count`);
+    
+    if (!res.ok) throw new Error("Không lấy được số lượng thông báo");
+    
+    const data = await res.json();
+    return data.totalCount;
+}
+
+
 
 // ==================== WEBPUSH API ====================
 export async function subscribeUserToPush(vapidPublicKey) {

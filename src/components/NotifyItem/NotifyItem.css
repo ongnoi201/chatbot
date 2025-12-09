@@ -1,0 +1,80 @@
+/* Container chính của Notify Item */
+.notify-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 15px;
+    border: 1px solid #eee;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    background-color: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    max-width: 600px;
+}
+
+/* Khu vực Ảnh */
+.notify-image {
+    flex-shrink: 0;
+    margin-right: 15px;
+}
+
+.notify-image img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* Khu vực Nội dung */
+.notify-content {
+    flex-grow: 1;
+    min-width: 0;
+}
+
+/* Hàng trên cùng (Tiêu đề và Tem) */
+.notify-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+/* Tiêu đề */
+.notify-title {
+    font-weight: bold;
+    color: #333;
+    font-size: 16px;
+    flex-grow: 1;
+    margin-right: 10px;
+}
+
+/* Thời gian */
+.notify-time {
+    color: #888;
+    font-size: 12px;
+    margin-bottom: 5px;
+}
+
+/* Nội dung Thông báo */
+.notify-body {
+    color: #555;
+    font-size: 14px;
+}
+
+/* Định dạng Tem Trạng thái (SUCCESS/FAILURE) */
+.notify-status {
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: bold;
+    color: #fff;
+    text-transform: uppercase;
+    flex-shrink: 0;
+}
+
+.notify-status.success {
+    background-color: #28a745;
+}
+
+.notify-status.failure {
+    background-color: #dc3545;
+}

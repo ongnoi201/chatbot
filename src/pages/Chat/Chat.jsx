@@ -38,6 +38,7 @@ export default function Chat({ user }) {
     const [formMode, setFormMode] = useState(null);
     const [loading, setLoading] = useState(false);
     const [closing, setClosing] = useState(false);
+    const [countNotify, setCountNotify] = useState(0);
     const [unreadPersonas, setUnreadPersonas] = useState(new Set());
     const navigate = useNavigate();
 
@@ -297,12 +298,19 @@ export default function Chat({ user }) {
                 >
                     <div className="sidebar-top">
                         <center><h2>Nhân <span onClick={handleRedirect}>vật</span></h2></center>
-                        <button className="add-persona" onClick={() => {
-                            setFormMode("create");
-                            setShowSidebar(false);
-                        }}>
-                                Tạo Nhân Vật Mới
-                        </button>
+                        <div className="button-top">
+                            <button className="add-persona" onClick={() => {
+                                setFormMode("create");
+                                setShowSidebar(false);
+                            }}>
+                                <i className="bi bi-plus"></i> Thêm mới
+                            </button>
+
+                            <button className="notify" onClick={() => navigate('/notify')}>
+                                <i className="bi bi-bell"></i> Thông báo <span style={{color: "yellow"}}>(100)</span>
+                            </button>
+                        </div>
+
                         <div className="persona-list">
                             {personas.map((p) => (
                                 <div
@@ -435,7 +443,7 @@ export default function Chat({ user }) {
                                     if (messageToDelete) {
                                         setConfirmDelete({
                                             personaId: selectedPersona._id,
-                                            messageId: messageToDelete._id 
+                                            messageId: messageToDelete._id
                                         });
                                     }
                                     setContextMenu(null);
