@@ -1,9 +1,11 @@
 import React from 'react';
 import './NotifyItem.css';
+import { formatRelativeTime } from '../../../utils';
 
-const NotifyItem = ({ imageSrc, title, time, body, status }) => {
-    // Xác định class CSS cho trạng thái
-    const statusClass = status === 'success' ? 'SUCCESS' : 'FAILURE';
+const NotifyItem = ({ title, time, body, status }) => {
+    const displayTime = formatRelativeTime(time);
+    const statusClass = status === 'SUCCESS' ? 'SUCCESS' : 'FAILURE';
+    const imageSrc = status ==='SUCCESS' ? 'https://cdn-icons-png.flaticon.com/128/14090/14090371.png' : 'https://cdn-icons-png.flaticon.com/128/1828/1828843.png';
 
     return (
         <div className={`notify-item ${statusClass} animate__animated animate__slideInLeft`}>
@@ -19,7 +21,7 @@ const NotifyItem = ({ imageSrc, title, time, body, status }) => {
                     </div>
                 </div>
                 
-                <div className="notify-time">{time}</div>
+                <div className="notify-time">{displayTime}</div>
                 <div className="notify-body">{body}</div>
             </div>
         </div>

@@ -13,13 +13,16 @@ import {
     updatePersona,
     deletePersona,
     clearChatHistory,
-    getLastMessages
+    getLastMessages,
+    countTotalNotifications,
+    addNotification
 } from "../../api";
 import ContextMenu from "../../components/ContextMenu/ContextMenu";
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
 import TypingIndicator from "../../components/TypingIndicator/TypingIndicator";
 import LoadingSpinner from "../../components/LoadingSpinner/LoadingSpinner";
 import PersonaFormModal from "../../components/PersonaFormModal/PersonaFormModal"
+import { getModelFromLocalStorage } from "../../../utils";
 
 export default function Chat({ user }) {
     const bottomRef = useRef(null);
@@ -28,7 +31,7 @@ export default function Chat({ user }) {
     const [selectedPersona, setSelectedPersona] = useState(null);
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState("");
-    const [model, setModel] = useState("gemini-2.5-flash");
+    const [model, setModel] = useState(getModelFromLocalStorage);
     const [contextMenu, setContextMenu] = useState(null);
     const [confirmDelete, setConfirmDelete] = useState(null);
     const [showSidebar, setShowSidebar] = useState(false);
@@ -45,8 +48,29 @@ export default function Chat({ user }) {
     alertify.set("notifier", "position", "bottom-center");
     alertify.set("notifier", "delay", 3);
 
+    const logNotification = useCallback(async (category, name, message, personaId = null) => {
+        try {
+            await addNotification({ category, name, message, personaId });
+            await numberNotify(); 
+        } catch (error) {
+            console.error("Lỗi khi ghi thông báo:", error);
+        }
+    }, []);
+
     useEffect(() => {
         loadPersonas();
+    }, []);
+
+    useEffect(() => {
+        const handleStorageChange = () => {
+            setModel(getModelFromLocalStorage());
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+        };
     }, []);
 
     const checkUnreadMessages = useCallback(async () => {
@@ -132,12 +156,11 @@ export default function Chat({ user }) {
 
         const userMsg = { role: "user", content: input.trim() };
         setInput("");
-        setMessages((prev) => [...prev, userMsg]);
 
-        let assistantMsg = { role: "assistant", content: "" };
-        setMessages((prev) => [...prev, assistantMsg]);
-
+        // Tạm thời thêm tin nhắn user và assistant placeholder vào UI
+        setMessages((prev) => [...prev, userMsg, { role: "assistant", content: "" }]);
         const history = [...messages, userMsg];
+        const initialMessagesLength = messages.length; // Chiều dài mảng trước khi thêm 2 tin nhắn mới
 
         await streamChat(
             selectedPersona._id,
@@ -148,13 +171,32 @@ export default function Chat({ user }) {
                 maxOutputTokens: 1024,
             },
             (delta) => {
-                assistantMsg = { ...assistantMsg, content: assistantMsg.content + delta };
-                setMessages((prev) => [...prev.slice(0, -1), assistantMsg]);
+                // Logic cập nhật stream không đổi
+                setMessages(prev => {
+                    const lastMsg = prev[prev.length - 1];
+                    const updatedContent = lastMsg.content + delta;
+                    return [...prev.slice(0, -1), { ...lastMsg, content: updatedContent }];
+                });
             },
-            () => { },
+            () => {
+                // Xử lý khi stream kết thúc thành công (done: true)
+            },
             (error) => {
-                assistantMsg = { role: "assistant", content: `⚠️ Stream error: ${error}` };
-                setMessages((prev) => [...prev.slice(0, -1), assistantMsg]);
+                console.error("Stream error in onSend:", error);
+
+                // === XỬ LÝ LỖI GIỚI HẠN/CHẶN TỪ BACKEND ===
+                let errorMessage = `⚠️ Stream error: ${error}`;
+
+                // Kiểm tra nếu lỗi là do giới hạn từ backend (chuỗi đã được backend chuẩn hóa)
+                if (error.includes("AI đã đạt đến giới hạn hoặc bị chặn")) {
+                    errorMessage = error;
+                }
+
+                // Xóa tin nhắn người dùng và tin nhắn assistant rỗng/lỗi khỏi UI
+                setMessages((prev) => prev.slice(0, initialMessagesLength));
+
+                // Hiển thị thông báo lỗi
+                alertify.error("AI đã đạt đến giới hạn");
             }
         );
     }
@@ -164,6 +206,7 @@ export default function Chat({ user }) {
 
         let assistantMsg = { role: "assistant", content: "" };
         setMessages((prev) => [...prev, assistantMsg]);
+        const initialMessagesLength = history.length; // Chiều dài mảng trước khi thêm tin nhắn assistant mới
 
         await streamChat(
             selectedPersona._id,
@@ -175,16 +218,36 @@ export default function Chat({ user }) {
                 regenerate: true,
             },
             (delta) => {
-                assistantMsg = { ...assistantMsg, content: assistantMsg.content + delta };
-                setMessages((prev) => [...prev.slice(0, -1), assistantMsg]);
+                // Logic cập nhật stream không đổi
+                setMessages(prev => {
+                    const lastMsg = prev[prev.length - 1];
+                    const updatedContent = lastMsg.content + delta;
+                    return [...prev.slice(0, -1), { ...lastMsg, content: updatedContent }];
+                });
             },
             () => { },
             (error) => {
-                assistantMsg = { role: "assistant", content: `⚠️ Stream error: ${error}` };
-                setMessages((prev) => [...prev.slice(0, -1), assistantMsg]);
+                console.error("Stream error in onSendRegenerate:", error);
+
+                // === XỬ LÝ LỖI GIỚI HẠN/CHẶN TỪ BACKEND ===
+                let errorMessage = `⚠️ Stream error: ${error}`;
+
+                // Kiểm tra nếu lỗi là do giới hạn từ backend
+                if (error.includes("AI đã đạt đến giới hạn hoặc bị chặn")) {
+                    errorMessage = error;
+                }
+
+                // Xóa tin nhắn assistant rỗng/lỗi khỏi UI (chỉ xóa 1 tin cuối cùng)
+                setMessages((prev) => prev.slice(0, initialMessagesLength));
+
+                // Hiển thị thông báo lỗi
+                alertify.error("AI đã đạt đến giới hạn");
             }
         );
     }
+
+    // ... các hàm khác không thay đổi
+    // (onDeleteHistory, loadMoreMessages, useEffects, render JSX)
 
     async function onDeleteHistory(personaId) {
         if (!personaId) return;
@@ -193,9 +256,11 @@ export default function Chat({ user }) {
             await clearChatHistory(personaId);
             setMessages([]);
             alertify.success("✅Đã xóa toàn bộ lịch sử");
+            await logNotification("SUCCESS", "Xóa lịch sử chat", `Đã xóa lịch sử chat với nhân vật ${selectedPersona.name}.`, personaId);
         } catch (err) {
             console.error("Xóa lịch sử lỗi", err);
             alertify.error("❌Lỗi khi xóa lịch sử");
+            await logNotification("FAILURE", "Xóa lịch sử chat", `Xóa lịch sử chat với nhân vật ${selectedPersona.name} thất bại.`, personaId);
         } finally {
             setLoading(false);
             setConfirmHistory(null);
@@ -260,6 +325,15 @@ export default function Chat({ user }) {
         bottomRef.current?.scrollIntoView({ behavior: "instant", block: "end" });
     }, [messages]);
 
+    const numberNotify = async () => {
+        const res = await countTotalNotifications();
+        if (res) setCountNotify(res);
+    }
+    useEffect(() => {
+        numberNotify();
+    }, [])
+
+
     return (
         <div
             className="wrap"
@@ -307,7 +381,7 @@ export default function Chat({ user }) {
                             </button>
 
                             <button className="notify" onClick={() => navigate('/notify')}>
-                                <i className="bi bi-bell"></i> Thông báo <span style={{color: "yellow"}}>(100)</span>
+                                <i className="bi bi-bell"></i> Thông báo <span style={{ color: "yellow" }}>({countNotify})</span>
                             </button>
                         </div>
 
@@ -472,9 +546,11 @@ export default function Chat({ user }) {
                             );
                             setMessages(updated);
                             alertify.success("✅Đã xóa các tin nhắn");
+                            await logNotification("SUCCESS", "Xóa tin nhắn", `Đã xóa tin nhắn từ ID ${confirmDelete.messageId.substring(0, 8)}... trở về sau với nhân vật ${selectedPersona.name}.`, confirmDelete.personaId);
                         } catch (err) {
                             console.error("Xóa chat lỗi", err);
                             alertify.error("❌Lỗi khi xóa tin nhắn");
+                            await logNotification("FAILURE", "Xóa tin nhắn", `Xóa tin nhắn từ ID ${confirmDelete.messageId.substring(0, 8)}... thất bại với nhân vật ${selectedPersona.name}.`, confirmDelete.personaId);
                         } finally {
                             setLoading(false);
                             setConfirmDelete(null);
@@ -497,9 +573,11 @@ export default function Chat({ user }) {
                             setSelectedPersona(null);
                             setMessages([]);
                             alertify.success("✅Xóa nhân vật thành công");
+                            await logNotification("SUCCESS", "Xóa nhân vật", `Đã xóa nhân vật ${personaToDelete.name} thành công.`, personaToDelete._id);
                         } catch (err) {
                             console.error("Xóa persona lỗi", err);
                             alertify.error("❌Lỗi khi xóa nhân vật");
+                            await logNotification("FAILURE", "Xóa nhân vật", `Xóa nhân vật ${personaToDelete.name} thất bại.`, personaToDelete._id);
                         } finally {
                             setLoading(false);
                             setConfirmDeletePersona(null);
@@ -524,6 +602,10 @@ export default function Chat({ user }) {
                     onClearHistory={() => { setConfirmHistory(true); setFormMode(null); }}
                     onSubmit={async (data) => {
                         setLoading(true);
+                        let isSuccess = false;
+                        let personaName = data.name;
+                        let personaId = formMode === "edit" ? selectedPersona._id : null;
+                        
                         try {
                             if (formMode === "create") {
                                 const created = await createPersona({
@@ -532,9 +614,13 @@ export default function Chat({ user }) {
                                 });
 
                                 const personaWithBg = { ...created, background: data.background };
+                                personaId = created._id;
 
                                 setPersonas((prev) => [...prev, personaWithBg]);
                                 setSelectedPersona(personaWithBg);
+                                alertify.success("✅Tạo nhân vật thành công");
+                                isSuccess = true;
+
                             } else if (formMode === "edit") {
                                 const updated = await updatePersona(
                                     selectedPersona._id,
@@ -549,6 +635,8 @@ export default function Chat({ user }) {
                                     )
                                 );
                                 setSelectedPersona(personaWithBg);
+                                alertify.success("✅Cập nhật nhân vật thành công");
+                                isSuccess = true;
                             }
                         } catch (err) {
                             alertify.error(
@@ -556,9 +644,18 @@ export default function Chat({ user }) {
                                     ? "❌Tạo nhân vật thất bại"
                                     : "❌Cập nhật nhân vật thất bại"
                             );
+                            isSuccess = false;
                         } finally {
                             setLoading(false);
                             setFormMode(null);
+
+                            const action = formMode === "create" ? "Tạo nhân vật" : "Cập nhật nhân vật";
+                            const category = isSuccess ? "SUCCESS" : "FAILURE";
+                            const message = isSuccess 
+                                ? `${action} ${personaName} thành công.`
+                                : `${action} ${personaName} thất bại.`;
+                            
+                            await logNotification(category, action, message, personaId);
                         }
                     }}
                 />

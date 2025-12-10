@@ -19,6 +19,7 @@ export default function Setting() {
         userMessageText: { r: 34, g: 34, b: 34, a: 1 },
         inputBoxColor: { r: 255, g: 255, b: 255, a: 0.65 },
         font: "Noto Sans",
+        model: "gemini-2.5-flash-lite", 
     };
 
     alertify.set("notifier", "position", "bottom-center");
@@ -26,7 +27,9 @@ export default function Setting() {
 
     const [settings, setSettings] = useState(() => {
         const saved = localStorage.getItem("chatSettings");
-        return saved ? JSON.parse(saved) : defaultSettings;
+        // Đảm bảo defaultSettings được áp dụng nếu không có model trong saved
+        const savedSettings = saved ? JSON.parse(saved) : {}; 
+        return { ...defaultSettings, ...savedSettings };
     });
 
     useEffect(() => {
@@ -68,7 +71,7 @@ export default function Setting() {
         setSettings((prev) => ({ ...prev, [name]: value }));
     };
 
-    // Component chọn màu
+    // Component chọn màu (không đổi)
     const ColorField = ({ label, name }) => {
         const [open, setOpen] = useState(false);
         const popupRef = useRef(null);
@@ -131,6 +134,23 @@ export default function Setting() {
                 </select>
             </div>
 
+            {/* THÊM CHỌN MODEL */}
+            <h3>Mô hình AI</h3>
+            <div className="setting-item">
+                <label>Chọn Model:</label>
+                <select
+                    name="model"
+                    value={settings.model}
+                    onChange={(e) =>
+                        setSettings((prev) => ({ ...prev, model: e.target.value }))
+                    }
+                >
+                    <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite (Mặc định)</option>
+                    <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                    <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                </select>
+            </div>
+            
             {/* Màu sắc */}
             <h3>Tùy chỉnh giao diện chat</h3>
             <ColorField label="Màu menu context" name="menuColor" />
@@ -166,7 +186,8 @@ export default function Setting() {
                 onClick={() => {
                     localStorage.removeItem("chatSettings");
                     setSettings(defaultSettings);
-                    alertify.success("✅Đã xóa toàn bộ lịch sử");
+                    window.location.reload(); 
+                    alertify.success("✅Đã đặt lại cài đặt mặc định");
                 }}
             >
                 Đặt lại mặc định

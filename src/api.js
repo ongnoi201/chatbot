@@ -272,11 +272,29 @@ export async function getNotifications() {
     return res.json();
 }
 
+export async function addNotification(data) {
+    if (!data || !data.category || !data.name || !data.message) {
+        throw new Error("Thông tin thông báo (category, name, message) là bắt buộc.");
+    }
+
+    const res = await apiFetch(`${API_URL}/api/notify/add`, {
+        method: "POST",
+        body: data,
+    });
+
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Thêm thông báo thất bại");
+    }
+    
+    return res.json();
+}
+
 export async function deleteNotificationsByStatus(status) {
     if (!status) {
         throw new Error("Trạng thái thông báo cần xóa là bắt buộc.");
     }
-    const res = await apiFetch(`${API_URL}/api/notify/${status}`, {
+    const res = await apiFetch(`${API_URL}/api/notify/delete/${status}`, {
         method: "DELETE",
     });
 
@@ -292,7 +310,6 @@ export async function deleteNotificationsByStatus(status) {
     }
     
     const data = await res.json();
-    alertify.success(data.message);
     return data;
 }
 
